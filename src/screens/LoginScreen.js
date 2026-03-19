@@ -7,7 +7,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-
+import { jwtDecode } from "jwt-decode";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { login } from "../api/authApi";
 
@@ -23,7 +23,7 @@ export default function LoginScreen({ navigation }) {
 
     try {
       setLoading(true);
-
+await AsyncStorage.removeItem("token");
       console.log("Sending:", { email, password });
 
       const res = await login({ email, password });
@@ -49,6 +49,14 @@ export default function LoginScreen({ navigation }) {
 
       await AsyncStorage.setItem("token", token);
 
+const decoded = jwtDecode(token);
+console.log("DECODED TOKEN:", decoded);
+
+
+if (!decoded.userId) {
+  Alert.alert("ERROR", "JWT không có userId → backend chưa đúng");
+  return;
+}
       navigation.replace("Home");
     } catch (err) {
       console.log("ERROR FULL:", err);

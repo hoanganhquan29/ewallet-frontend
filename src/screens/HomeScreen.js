@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 import { getBalance } from "../api/walletApi";
-
+import {  Button } from "react-native";
 export default function HomeScreen({ navigation }) {
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -47,7 +47,10 @@ export default function HomeScreen({ navigation }) {
       >
         <Text style={{ color: "white" }}>Refresh</Text>
       </TouchableOpacity>
-
+<Button
+  title="View Transactions"
+  onPress={() => navigation.navigate("Transactions")}
+/>
       <TouchableOpacity
         onPress={() => navigation.navigate("Transfer")}
         style={{ backgroundColor: "blue", padding: 10 }}
