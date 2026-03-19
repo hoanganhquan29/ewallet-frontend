@@ -6,6 +6,15 @@ import LoginScreen from "../screens/LoginScreen";
 import OtpScreen from "../screens/OtpScreen";
 import TransferScreen from "../screens/TransferScreen";
 import TransactionHistoryScreen from "../screens/TransactionHistoryScreen";
+import PaymentScreen from "../screens/PaymentScreen";
+import DepositScreen from "../screens/DepositScreen";
+import AdminHomeScreen from "../screens/admin/AdminHomeScreen";
+
+import UserListScreen from "../screens/admin/UserListScreen";
+import TransactionListScreen from "../screens/admin/TransactionListScreen";
+import SuspiciousScreen from "../screens/admin/SuspiciousScreen";
+import AuditLogScreen from "../screens/admin/AuditLogScreen";
+
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
@@ -17,6 +26,14 @@ export default function AppNavigator() {
         <Stack.Screen name="Transfer" component={TransferScreen} />
         <Stack.Screen name="OTP" component={OtpScreen} />
         <Stack.Screen name="Transactions" component={TransactionHistoryScreen} />
+        <Stack.Screen name="Payment" component={PaymentScreen} />
+        <Stack.Screen name="Deposit" component={DepositScreen} />
+        <Stack.Screen name="AdminHome" component={AdminHomeScreen} />
+        <Stack.Screen name="Users" component={UserListScreen} />
+<Stack.Screen name="AdminTransactions" component={TransactionListScreen} />
+<Stack.Screen name="Suspicious" component={SuspiciousScreen} />
+<Stack.Screen name="AuditLogs" component={AuditLogScreen} />
+       
       </Stack.Navigator>
     </NavigationContainer>
   );

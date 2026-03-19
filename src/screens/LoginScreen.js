@@ -23,7 +23,7 @@ export default function LoginScreen({ navigation }) {
 
     try {
       setLoading(true);
-await AsyncStorage.removeItem("token");
+
       console.log("Sending:", { email, password });
 
       const res = await login({ email, password });
@@ -57,7 +57,11 @@ if (!decoded.userId) {
   Alert.alert("ERROR", "JWT không có userId → backend chưa đúng");
   return;
 }
-      navigation.replace("Home");
+      if (decoded.role === "ADMIN") {
+  navigation.replace("AdminHome");
+} else {
+  navigation.replace("Home");
+}
     } catch (err) {
       console.log("ERROR FULL:", err);
       console.log("ERROR RESPONSE:", err.response?.data);
