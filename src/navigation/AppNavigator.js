@@ -17,6 +17,7 @@ import AuditLogScreen from "../screens/admin/AuditLogScreen";
 import RegisterScreen from '../screens/RegisterScreen'
 import LoginOtpScreen from '../screens/LoginOtpScreen'
 import PaymentSuccessScreen from "../screens/PaymentSuccessScreen";
+import AdminReportScreen from "../screens/admin/AdminReportScreen";
 import * as Linking from 'expo-linking'
 
 const linking = {
@@ -49,7 +50,7 @@ export default function AppNavigator() {
 <Stack.Screen name="Register" component={RegisterScreen} />
 <Stack.Screen name="LoginOtp" component={LoginOtpScreen} />
 <Stack.Screen name="Success" component={PaymentSuccessScreen} />
-       
+       <Stack.Screen name="AdminReport" component={AdminReportScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

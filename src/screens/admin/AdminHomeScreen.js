@@ -73,7 +73,13 @@ export default function AdminHomeScreen({ navigation }) {
         <Text style={styles.icon}>📜</Text>
         <Text style={styles.gridText}>Audit Logs</Text>
       </TouchableOpacity>
-
+<TouchableOpacity
+  style={styles.gridItem}
+  onPress={() => navigation.navigate("AdminReport")}
+>
+  <Text style={styles.icon}>📊</Text>
+  <Text style={styles.gridText}>Reports</Text>
+</TouchableOpacity>
     </View>
 
   </View>

@@ -46,3 +46,17 @@ export const deleteUser = (email) => {
 export const updateUser = (email, data) => {
   return axiosClient.put(`/admin/users/${email}`, data)
 }
+export const getReportOverview = () =>
+  axiosClient.get("/admin/report/overview");
+
+export const getReportSummary = () =>
+  axiosClient.get("/admin/report/summary");
+
+export const getRevenueDaily = () =>
+  axiosClient.get("/admin/report/revenue/daily");
+
+export const getUserReport = () =>
+  axiosClient.get("/admin/report/users");
+
+export const getAuditSummary = () =>
+  axiosClient.get("/admin/report/audit-summary");
