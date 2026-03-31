@@ -14,12 +14,25 @@ import UserListScreen from "../screens/admin/UserListScreen";
 import TransactionListScreen from "../screens/admin/TransactionListScreen";
 import SuspiciousScreen from "../screens/admin/SuspiciousScreen";
 import AuditLogScreen from "../screens/admin/AuditLogScreen";
+import RegisterScreen from '../screens/RegisterScreen'
+import LoginOtpScreen from '../screens/LoginOtpScreen'
+import PaymentSuccessScreen from "../screens/PaymentSuccessScreen";
+import * as Linking from 'expo-linking'
 
+const linking = {
+  prefixes: ['myapp://'],
+  config: {
+    screens: {
+      Success: 'success',
+      Cancel: 'cancel'
+    }
+  }
+}
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <Stack.Navigator>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
@@ -33,6 +46,9 @@ export default function AppNavigator() {
 <Stack.Screen name="AdminTransactions" component={TransactionListScreen} />
 <Stack.Screen name="Suspicious" component={SuspiciousScreen} />
 <Stack.Screen name="AuditLogs" component={AuditLogScreen} />
+<Stack.Screen name="Register" component={RegisterScreen} />
+<Stack.Screen name="LoginOtp" component={LoginOtpScreen} />
+<Stack.Screen name="Success" component={PaymentSuccessScreen} />
        
       </Stack.Navigator>
     </NavigationContainer>

@@ -11,10 +11,8 @@ export const verifyTransfer = (data) => {
   return axiosClient.post("/wallet/transfer/verify", data);
 };
 
-export const requestDeposit = async (amount) => {
-  const res = await axiosClient.post("/wallet/deposit/request", {
-    amount,
-  });
+export const requestDeposit = async (data) => {
+  const res = await axiosClient.post("/wallet/deposit/request", data);
   return res.data;
 };
 

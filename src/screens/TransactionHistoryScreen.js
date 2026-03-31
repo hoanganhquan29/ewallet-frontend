@@ -11,6 +11,9 @@ import { getTransactions } from "../api/transactionApi";
 import TransactionItem from "../components/TransactionItem";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
+import { Image } from "react-native";
+import { COLORS, SIZES } from "../theme/theme";
+import logo from "../assets/logo.png";
 const PAGE_SIZE = 10;
 
 const TransactionHistoryScreen = () => {
@@ -115,23 +118,42 @@ if (!currentUserId) {
   );
 }
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={transactions}
-        keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-        renderItem={({ item }) => (
-          <TransactionItem item={item} currentUserId={currentUserId} />
-        )}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={renderFooter}
-        ListEmptyComponent={renderEmpty}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
-      />
+  <View style={styles.container}>
+
+    {/* HEADER */}
+    <View style={styles.header}>
+      <Image source={logo} style={styles.logo} />
+      <Text style={styles.title}>Transactions</Text>
+      <Text style={styles.subtitle}>Your transaction history</Text>
     </View>
-  );
+
+    {/* LIST */}
+    <FlatList
+      contentContainerStyle={{ paddingHorizontal: SIZES.padding }}
+      data={transactions}
+      keyExtractor={(item, index) =>
+  item.id ? item.id.toString() + "_" + index : index.toString()
+}
+      renderItem={({ item }) => (
+        <TransactionItem
+          item={item}
+          currentUserId={currentUserId}
+        />
+      )}
+      onEndReached={handleLoadMore}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={renderFooter}
+      ListEmptyComponent={renderEmpty}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+        />
+      }
+    />
+
+  </View>
+);
 };
 
 export default TransactionHistoryScreen;
@@ -139,8 +161,31 @@ export default TransactionHistoryScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.background,
   },
+
+  header: {
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+
+  logo: {
+    width: 60,
+    height: 60,
+    marginBottom: 8,
+  },
+
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: COLORS.primary,
+  },
+
+  subtitle: {
+    color: COLORS.secondary,
+    marginTop: 4,
+  },
+
   emptyContainer: {
     alignItems: "center",
     marginTop: 50,
