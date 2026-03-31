@@ -15,11 +15,12 @@ const axiosClient = axios.create({
 axiosClient.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem("token");
 
+  console.log("TOKEN USING:", token);
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  config.headers["Idempotency-Key"] = Date.now().toString();
   return config;
 });
 

@@ -4,20 +4,70 @@ import { getAuditLogs } from '../../api/adminApi'
 import { StyleSheet, Image } from "react-native";
 import { COLORS, SIZES, SHADOW } from "../../theme/theme";
 import logo from "../../assets/logo.png";
+import { TextInput } from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import { Keyboard, TouchableWithoutFeedback } from "react-native";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { TouchableOpacity } from "react-native";
 export default function AuditLogScreen() {
   const [logs, setLogs] = useState([])
   const [page, setPage] = useState(0)
+const [loading, setLoading] = useState(false)
+const [totalPages, setTotalPages] = useState(1)
 
-  const fetchLogs = async () => {
-    const res = await getAuditLogs(page)
-    setLogs(prev => [...prev, ...res.data.content])
+const [action, setAction] = useState("")
+const [userId, setUserId] = useState("")
+const [from, setFrom] = useState("")
+const [to, setTo] = useState("")
+const [showFrom, setShowFrom] = useState(false);
+const [showTo, setShowTo] = useState(false);
+const fetchLogs = async (customPage = page) => {
+  if (loading) return;
+
+  setLoading(true);
+
+  try {
+    const res = await getAuditLogs({
+      page: customPage,
+      action,
+      userId,
+      from,
+      to
+    });
+
+    setLogs(prev =>
+      customPage === 0
+        ? res.data.content
+        : [...prev, ...res.data.content]
+    );
+
+    setTotalPages(res.data.totalPages);
+  } catch (e) {
+    console.log(e);
+  } finally {
+    setLoading(false);
   }
+};
 
-  useEffect(() => {
-    fetchLogs()
-  }, [page])
+useEffect(() => {
+  if (page !== 0) {
+    fetchLogs(page)
+  }
+}, [page])
+useEffect(() => {
+  setLogs([])
+  setTotalPages(1)
+  setPage(0)
 
+  fetchLogs(0)   
+}, [action, userId, from, to])
+const getColor = (action) => {
+  if (action === "LOCK_USER" || action === "DELETE_USER") return "red";
+  if (action === "LOGIN") return "green";
+  return COLORS.primary;
+};
 return (
+   
   <View style={styles.container}>
 
     {/* HEADER */}
@@ -30,66 +80,139 @@ return (
     </View>
 
     <FlatList
+    ListHeaderComponent={
+  <View style={{ paddingHorizontal: SIZES.padding }}>
+
+    {/* ACTION */}
+    <Picker
+      selectedValue={action}
+      onValueChange={(v) => {
+        setLogs([])
+        setPage(0)
+        setTotalPages(1)
+        setAction(v)
+      }}
+    >
+      <Picker.Item label="All Actions" value="" />
+      <Picker.Item label="LOGIN" value="LOGIN" />
+      <Picker.Item label="LOCK_USER" value="LOCK_USER" />
+      <Picker.Item label="DELETE_USER" value="DELETE_USER" />
+    </Picker>
+
+    {/* USER ID */}
+    <TextInput
+      placeholder="User ID"
+      value={userId}
+      onChangeText={(text) => {
+        setLogs([])
+        setPage(0)
+        setTotalPages(1)
+        setUserId(text)
+      }}
+      style={styles.input}
+    />
+
+    {/* FROM DATE */}
+    <TouchableOpacity
+      style={styles.input}
+      onPress={() => setShowFrom(true)}
+    >
+      <Text>{from || "Select From Date"}</Text>
+    </TouchableOpacity>
+
+    {showFrom && (
+      <DateTimePicker
+        value={from ? new Date(from) : new Date()}
+        mode="date"
+        display="default"
+        onChange={(e, date) => {
+          setShowFrom(false);
+          if (date) {
+            const f = date.toISOString().split("T")[0];
+            setLogs([])
+            setPage(0)
+            setTotalPages(1)
+            setFrom(f)
+          }
+        }}
+      />
+    )}
+
+    {/* TO DATE */}
+    <TouchableOpacity
+      style={styles.input}
+      onPress={() => setShowTo(true)}
+    >
+      <Text>{to || "Select To Date"}</Text>
+    </TouchableOpacity>
+
+    {showTo && (
+      <DateTimePicker
+        value={to ? new Date(to) : new Date()}
+        mode="date"
+        display="default"
+        onChange={(e, date) => {
+          setShowTo(false);
+          if (date) {
+            const t = date.toISOString().split("T")[0];
+            setLogs([])
+            setPage(0)
+            setTotalPages(1)
+            setTo(t)
+          }
+        }}
+      />
+    )}
+
+  </View>
+}
+    keyboardShouldPersistTaps="handled"
       contentContainerStyle={{ padding: SIZES.padding }}
       data={logs}
       keyExtractor={(item, index) =>
         item.id ? item.id.toString() + "_" + index : index.toString()
       }
-      onEndReached={() => setPage(prev => prev + 1)}
-      renderItem={({ item }) => {
-        const d = parseDetails(item.details);
+      onEndReached={() => {
+  if (!loading && page < totalPages - 1) {
+    setPage(prev => prev + 1)
+  }
+}}      ListFooterComponent={
+  loading ? <Text style={{ textAlign: "center" }}>Loading...</Text> : null
+}
+      onEndReachedThreshold={0.5}
+      renderItem={({ item }) => (
+  <View style={styles.card}>
 
-        return (
-          <View style={styles.card}>
+    <Text style={[
+      styles.action,
+      { color: getColor(item.action) }
+    ]}>
+      {item.action}
+    </Text>
 
-            {/* ACTION */}
-            <Text style={styles.action}>
-              {item.action}
-            </Text>
+    <Text style={styles.message}>
+      {item.description}
+    </Text>
 
-            {/* EMAIL */}
-            {d.email && (
-              <Text style={styles.info}>
-                👤 {d.email}
-              </Text>
-            )}
+    <View style={styles.footer}>
+      <Text style={styles.ip}>
+        🌐 {item.ip}
+      </Text>
 
-            {/* MESSAGE */}
-            {d.message && (
-              <Text style={styles.message}>
-                {d.message}
-              </Text>
-            )}
+      <Text style={styles.date}>
+        {formatDate(item.time)}
+      </Text>
+    </View>
 
-            {/* FOOTER */}
-            <View style={styles.footer}>
-              <Text style={styles.ip}>
-                🌐 {item.ipAddress}
-              </Text>
+  </View>
+)}
 
-              <Text style={styles.date}>
-                {formatDate(item.createdAt)}
-              </Text>
-            </View>
-
-          </View>
-        );
-      }}
     />
 
   </View>
+  
 );
 }
-const parseDetails = (details) => {
-  try {
-    return JSON.parse(details);
-  } catch {
-    return { message: details };
-  }
-};
-
-const formatMoney = (num) =>
-  new Intl.NumberFormat("vi-VN").format(num) + " VND";
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString("vi-VN");
 };
@@ -161,4 +284,11 @@ const styles = StyleSheet.create({
     color: COLORS.secondary,
     marginTop: 2,
   },
+  input: {
+  borderWidth: 1,
+  borderColor: COLORS.border,
+  borderRadius: 6,
+  padding: 8,
+  marginTop: 8,
+},
 });
