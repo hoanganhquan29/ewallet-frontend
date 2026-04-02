@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useEffect } from "react";
+import Constants from "expo-constants";
 import * as Linking from "expo-linking";
 import {
   View,
@@ -15,6 +17,27 @@ export default function DepositScreen({ navigation }) {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const getReturnUrl = () => {
+  const host = Constants.expoConfig?.hostUri;
+  return `exp://${host}/--/payment-success`;
+};
+
+  /*useEffect(() => {
+  const sub = Linking.addEventListener("url", (event) => {
+    console.log("DEEPLINK:", event.url);
+
+    if (event.url.includes("payment-success")) {
+      navigation.navigate("Home");
+    }
+
+    if (event.url.includes("payment-cancel")) {
+      navigation.navigate("Home");
+    }
+  });
+
+  return () => sub.remove();
+}, []);*/
+
   const handleDeposit = async () => {
     const numericAmount = parseInt(amount);
 
@@ -26,11 +49,13 @@ export default function DepositScreen({ navigation }) {
     try {
       setLoading(true);
 
-      const successUrl = Linking.createURL("success"); // 🔥 DÒNG QUAN TRỌNG
+const successUrl = getReturnUrl();
+const cancelUrl = successUrl.replace("payment-success", "payment-cancel");
 
 const res = await requestDeposit({
   amount: numericAmount,
-  successUrl: successUrl
+  successUrl,
+  cancelUrl,
 });
 
 Linking.openURL(res.url);

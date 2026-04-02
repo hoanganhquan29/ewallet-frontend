@@ -18,14 +18,16 @@ import RegisterScreen from '../screens/RegisterScreen'
 import LoginOtpScreen from '../screens/LoginOtpScreen'
 import PaymentSuccessScreen from "../screens/PaymentSuccessScreen";
 import AdminReportScreen from "../screens/admin/AdminReportScreen";
+import RequestMoneyScreen from "../screens/RequestMoneyScreen";
+import PendingRequestsScreen from "../screens/PendingRequestsScreen";
 import * as Linking from 'expo-linking'
 
 const linking = {
   prefixes: ['myapp://'],
   config: {
     screens: {
-      Success: 'success',
-      Cancel: 'cancel'
+       Home: 'payment-success',
+  Deposit: 'payment-cancel'
     }
   }
 }
@@ -51,6 +53,8 @@ export default function AppNavigator() {
 <Stack.Screen name="LoginOtp" component={LoginOtpScreen} />
 <Stack.Screen name="Success" component={PaymentSuccessScreen} />
        <Stack.Screen name="AdminReport" component={AdminReportScreen} />
+       <Stack.Screen name="RequestMoney" component={RequestMoneyScreen}/>
+       <Stack.Screen name="PendingRequests" component={PendingRequestsScreen}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

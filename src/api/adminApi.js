@@ -1,5 +1,6 @@
 import axiosClient from './axiosClient'
 
+import { v4 as uuidv4 } from "uuid";
 
 export const getUsers = () => {
   return axiosClient.get('/admin/users')
@@ -60,3 +61,18 @@ export const getUserReport = () =>
 
 export const getAuditSummary = () =>
   axiosClient.get("/admin/report/audit-summary");
+
+export const requestMoney = async (receiverEmail, amount) => {
+  return axiosClient.post(
+    "/wallet/request-money",
+    {
+      receiverEmail,
+      amount,
+    },
+    {
+      headers: {
+        "Idempotency-Key": uuidv4(),
+      },
+    }
+  );
+};

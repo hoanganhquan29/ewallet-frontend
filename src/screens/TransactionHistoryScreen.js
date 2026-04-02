@@ -23,7 +23,7 @@ const TransactionHistoryScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-const [currentUserId, setCurrentUserId] = useState(null);
+const [currentUserEmail, setCurrentUserEmail] = useState(null);
 
 
   const fetchTransactions = async (pageNumber = 0, isRefresh = false) => {
@@ -69,9 +69,9 @@ useEffect(() => {
 
     const decoded = jwtDecode(token);
 
-    console.log("USER ID:", decoded.userId);
+    console.log("USER EMAIL:", decoded.sub);
 
-    setCurrentUserId(decoded.userId);
+    setCurrentUserEmail(decoded.sub);
   };
 
   loadUser();
@@ -110,7 +110,7 @@ useEffect(() => {
       </View>
     );
   };
-if (!currentUserId) {
+if (!currentUserEmail) {
   return (
     <View style={{ flex: 1, justifyContent: "center" }}>
       <ActivityIndicator />
@@ -136,9 +136,9 @@ if (!currentUserId) {
 }
       renderItem={({ item }) => (
         <TransactionItem
-          item={item}
-          currentUserId={currentUserId}
-        />
+  item={item}
+  currentUserEmail={currentUserEmail}
+/>
       )}
       onEndReached={handleLoadMore}
       onEndReachedThreshold={0.5}
