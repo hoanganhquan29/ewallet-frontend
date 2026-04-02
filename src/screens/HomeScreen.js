@@ -98,6 +98,13 @@ useFocusEffect(
         <Text style={styles.viewText}>View Transactions</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity 
+  style={styles.button} 
+  onPress={() => navigation.navigate("SplitList")}
+>
+  <Text style={styles.buttonText}>Split Bill</Text>
+</TouchableOpacity>
+
 <TouchableOpacity
   onPress={() => navigation.navigate("RequestMoney")}
   style={{
@@ -218,4 +225,5 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: "600",
   },
+  
 });
