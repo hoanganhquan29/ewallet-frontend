@@ -18,6 +18,9 @@ import RegisterScreen from '../screens/RegisterScreen'
 import LoginOtpScreen from '../screens/LoginOtpScreen'
 import PaymentSuccessScreen from "../screens/PaymentSuccessScreen";
 import AdminReportScreen from "../screens/admin/AdminReportScreen";
+import SplitBillCreateScreen from "../screens/splitBill/SplitBillCreateScreen";
+import SplitBillListScreen from "../screens/splitBill/SplitBillListScreen";
+import SplitBillDetailScreen from "../screens/splitBill/SplitBillDetailScreen";
 import * as Linking from 'expo-linking'
 
 const linking = {
@@ -51,6 +54,9 @@ export default function AppNavigator() {
 <Stack.Screen name="LoginOtp" component={LoginOtpScreen} />
 <Stack.Screen name="Success" component={PaymentSuccessScreen} />
        <Stack.Screen name="AdminReport" component={AdminReportScreen} />
+       <Stack.Screen name="SplitList" component={SplitBillListScreen} />
+<Stack.Screen name="SplitCreate" component={SplitBillCreateScreen} />
+<Stack.Screen name="SplitDetail" component={SplitBillDetailScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
