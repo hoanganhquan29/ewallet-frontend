@@ -1,20 +1,29 @@
 import { StyleSheet, Text, View } from "react-native";
 
-const TransactionItem = ({ item, currentUserId }) => {
+const TransactionItem = ({ item, currentUserEmail }) => {
 
 
 const getType = () => {
-  const senderId = item.sender?.id;
-  const receiverId = item.receiver?.id;
+  const senderEmail = item.sender?.email;
+  const receiverEmail = item.receiver?.email;
 
   if (item.type === "DEPOSIT") return "DEPOSIT";
 
   if (item.type === "TRANSFER") {
-    if (senderId === currentUserId) return "SENT";
-    if (receiverId === currentUserId) return "RECEIVED";
+    if (senderEmail === currentUserEmail) return "SENT";
+    if (receiverEmail === currentUserEmail) return "RECEIVED";
   }
 
-  console.log("UNKNOWN:", item, "USER:", currentUserId);
+  if (item.type === "REQUEST") {
+    if (item.status === "PENDING") return "REQUEST_PENDING";
+    if (item.status === "REJECTED") return "REQUEST_REJECTED";
+
+    if (item.status === "SUCCESS") {
+      if (senderEmail === currentUserEmail) return "SENT";
+      if (receiverEmail === currentUserEmail) return "RECEIVED";
+    }
+  }
+
   return "UNKNOWN";
 };
 const getDisplayText = () => {
@@ -27,14 +36,33 @@ const getDisplayText = () => {
   if (type === "RECEIVED") return `From: ${senderEmail}`;
   if (type === "DEPOSIT") return "Deposit";
 
+  if (type === "REQUEST_PENDING") return `Request to ${senderEmail}`;
+  if (type === "REQUEST_REJECTED") return `Request rejected`;
+
   return "";
 };
-  const getColor = () => {
-    if (getType() === "SENT") return "#ff4d4f";
-    if (getType() === "RECEIVED") return "#52c41a";
-    return "#1890ff";
-  };
+const getColor = () => {
+  const type = getType();
 
+  if (type === "SENT") return "#ff4d4f";
+  if (type === "RECEIVED") return "#52c41a";
+  if (type === "REQUEST_PENDING") return "#faad14";
+  if (type === "REQUEST_REJECTED") return "#999";
+
+  return "#1890ff";
+};
+const type = getType();
+
+let sign = "";
+let amount = item.amount;
+
+if (type === "SENT") {
+  sign = "-";
+} else if (type === "RECEIVED") {
+  sign = "+";
+} else {
+  sign = ""; 
+}
   return (
     <View style={styles.container}>
       <View>
@@ -46,8 +74,8 @@ const getDisplayText = () => {
       </View>
 
       <Text style={[styles.amount, { color: getColor() }]}>
-        {getType() === "SENT" ? "-" : "+"}
-        {item.amount.toLocaleString()} VND
+        {sign}
+{amount.toLocaleString()} VND
       </Text>
     </View>
   );

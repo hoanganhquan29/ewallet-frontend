@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 import {
   View,
   Text,
@@ -24,25 +25,37 @@ const [processingId, setProcessingId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchDetail = async () => {
+  try {
+    const res = await getSplitBillDetail(id);
+    setData(res.data);
+  } catch (err) {
+    console.log("DETAIL ERROR:", err.response?.data || err.message);
+  }
+
+};
+
+useEffect(() => {
+  const init = async () => {
     try {
       const res = await getSplitBillDetail(id);
       setData(res.data);
     } catch (err) {
       console.log("DETAIL ERROR:", err.response?.data || err.message);
+    }
+
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return;
+      const decoded = jwtDecode(token);
+      setCurrentUser(decoded.sub);
+    } catch (err) {
+      console.log("JWT decode error:", err.message);
     } finally {
-      setLoading(false);
+      setLoading(false); 
     }
   };
 
-useEffect(() => {
-  fetchDetail();
-
-  const loadUser = async () => {
-    const email = await AsyncStorage.getItem("email");
-    setCurrentUser(email);
-  };
-
-  loadUser();
+  init();
 }, []);
 
   const handleAccept = (detailId) => {
@@ -114,38 +127,46 @@ useEffect(() => {
       <FlatList
         data={data.details}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View
-            style={{
-              padding: 12,
-              borderWidth: 1,
-              borderRadius: 10,
-              marginBottom: 10,
-            }}
-          >
-            <Text>{item.email}</Text>
-            <Text>{item.amount} VND</Text>
+        renderItem={({ item }) => {
+  console.log("CURRENT USER:", currentUser);
+  console.log("ITEM EMAIL:", item.email);
 
-            <Text style={{ color: getStatusColor(item.status) }}>
-              {item.status}
-            </Text>
+  return (
+    <View
+      style={{
+        padding: 12,
+        borderWidth: 1,
+        borderRadius: 10,
+        marginBottom: 10,
+      }}
+    >
+      <Text>{item.email}</Text>
+      <Text>{item.amount} VND</Text>
 
-            {item.status === "PENDING" && item.email === currentUser && (
-              <>
-                <Button
-  title={processingId === item.id ? "Processing..." : "Accept"}
-  disabled={processingId === item.id}
-  onPress={() => handleAccept(item.id)}
-/>
-                <Button
-                  title="Reject"
-                  color="red"
-                  onPress={() => handleReject(item.id)}
-                />
-              </>
-            )}
-          </View>
+      <Text style={{ color: getStatusColor(item.status) }}>
+        {item.status}
+      </Text>
+
+      {item.status === "PENDING" &&
+        currentUser &&
+        item.email?.trim().toLowerCase() ===
+          currentUser?.trim().toLowerCase() && (
+          <>
+            <Button
+              title={processingId === item.id ? "Processing..." : "Accept"}
+              disabled={processingId === item.id}
+              onPress={() => handleAccept(item.id)}
+            />
+            <Button
+              title="Reject"
+              color="red"
+              onPress={() => handleReject(item.id)}
+            />
+          </>
         )}
+    </View>
+  );
+}}
       />
     </View>
   );

@@ -1,5 +1,6 @@
 import axiosClient from "./axiosClient";
 
+
 export const getBalance = () => {
   return axiosClient.get("/wallet/balance");
 };
@@ -22,4 +23,56 @@ export const confirmDeposit = async (transactionId) => {
     status: "SUCCESS",
      signature: "fake-sign",
   });
+};
+
+export const requestMoney = async (receiverEmail, amount) => {
+  const idempotencyKey =
+    Date.now().toString() + Math.random().toString(36).substring(2);
+
+  return axiosClient.post(
+    "/wallet/request-money",
+    {
+      receiverEmail,
+      amount,
+    },
+    {
+      headers: {
+        "Idempotency-Key": idempotencyKey,
+      },
+    }
+  );
+};
+
+export const getPendingRequests = async () => {
+  return axiosClient.get("/wallet/request-money/pending");
+};
+
+export const acceptRequest = async (id) => {
+  const key =
+    Date.now().toString() + Math.random().toString(36).substring(2);
+
+  return axiosClient.post(
+    `/wallet/request-money/${id}/accept`,
+    {},
+    {
+      headers: {
+        "Idempotency-Key": key,
+      },
+    }
+  );
+};
+
+export const rejectRequest = async (id) => {
+  const key =
+    Date.now().toString() + Math.random().toString(36).substring(2);
+
+  return axiosClient.post(
+    `/wallet/request-money/${id}/reject`,
+    {},
+    {
+      headers: {
+        "Idempotency-Key": key,
+      },
+    }
+  );
 };

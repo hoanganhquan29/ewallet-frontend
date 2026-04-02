@@ -105,6 +105,33 @@ useFocusEffect(
   <Text style={styles.buttonText}>Split Bill</Text>
 </TouchableOpacity>
 
+<TouchableOpacity
+  onPress={() => navigation.navigate("RequestMoney")}
+  style={{
+    backgroundColor: "#28a745",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 20,
+  }}
+>
+  <Text style={{ color: "#fff", textAlign: "center" }}>
+    Go to Request Money
+  </Text>
+</TouchableOpacity>
+
+<TouchableOpacity
+  onPress={() => navigation.navigate("PendingRequests")}
+  style={{
+    backgroundColor: "#28a745",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 20,
+  }}
+>
+  <Text style={{ color: "#fff", textAlign: "center" }}>
+    Go to Pending Requests
+  </Text>
+</TouchableOpacity>
     </View>
   );
 }

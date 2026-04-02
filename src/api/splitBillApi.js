@@ -15,7 +15,7 @@ export const rejectSplit = (detailId) => {
   return axiosClient.post(`/wallet/split-bill/${detailId}/reject`);
 };
 
-// ⚠️ CẦN BACKEND CONFIRM
+
 export const getMySplitBills = () => {
   return axiosClient.get("/wallet/split-bill");
 };

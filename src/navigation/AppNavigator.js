@@ -21,14 +21,16 @@ import AdminReportScreen from "../screens/admin/AdminReportScreen";
 import SplitBillCreateScreen from "../screens/splitBill/SplitBillCreateScreen";
 import SplitBillListScreen from "../screens/splitBill/SplitBillListScreen";
 import SplitBillDetailScreen from "../screens/splitBill/SplitBillDetailScreen";
+import RequestMoneyScreen from "../screens/RequestMoneyScreen";
+import PendingRequestsScreen from "../screens/PendingRequestsScreen";
 import * as Linking from 'expo-linking'
 
 const linking = {
   prefixes: ['myapp://'],
   config: {
     screens: {
-      Success: 'success',
-      Cancel: 'cancel'
+       Home: 'payment-success',
+  Deposit: 'payment-cancel'
     }
   }
 }
@@ -57,6 +59,8 @@ export default function AppNavigator() {
        <Stack.Screen name="SplitList" component={SplitBillListScreen} />
 <Stack.Screen name="SplitCreate" component={SplitBillCreateScreen} />
 <Stack.Screen name="SplitDetail" component={SplitBillDetailScreen} />
+       <Stack.Screen name="RequestMoney" component={RequestMoneyScreen}/>
+       <Stack.Screen name="PendingRequests" component={PendingRequestsScreen}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
