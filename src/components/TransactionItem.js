@@ -1,5 +1,9 @@
 import { StyleSheet, Text, View } from "react-native";
-
+const formatAmount = (num) => {
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(0) + "K";
+  return String(num);
+};
 const TransactionItem = ({ item, currentUserEmail }) => {
 
 
@@ -7,13 +11,18 @@ const getType = () => {
   const senderEmail = item.sender?.email;
   const receiverEmail = item.receiver?.email;
 
-  if (item.type === "DEPOSIT") return "DEPOSIT";
+  // ===== DEPOSIT =====
+  if (!item.sender && item.receiver) {
+    return "DEPOSIT";
+  }
 
+  // ===== TRANSFER =====
   if (item.type === "TRANSFER") {
     if (senderEmail === currentUserEmail) return "SENT";
     if (receiverEmail === currentUserEmail) return "RECEIVED";
   }
 
+  // ===== REQUEST =====
   if (item.type === "REQUEST") {
     if (item.status === "PENDING") return "REQUEST_PENDING";
     if (item.status === "REJECTED") return "REQUEST_REJECTED";
@@ -23,6 +32,10 @@ const getType = () => {
       if (receiverEmail === currentUserEmail) return "RECEIVED";
     }
   }
+
+  // ===== FALLBACK =====
+  if (receiverEmail === currentUserEmail) return "RECEIVED";
+  if (senderEmail === currentUserEmail) return "SENT";
 
   return "UNKNOWN";
 };
@@ -34,7 +47,7 @@ const getDisplayText = () => {
 
   if (type === "SENT") return `To: ${receiverEmail}`;
   if (type === "RECEIVED") return `From: ${senderEmail}`;
-  if (type === "DEPOSIT") return "Deposit";
+  if (type === "DEPOSIT") return "Deposit (Bank)";
 
   if (type === "REQUEST_PENDING") return `Request to ${senderEmail}`;
   if (type === "REQUEST_REJECTED") return `Request rejected`;
@@ -48,7 +61,7 @@ const getColor = () => {
   if (type === "RECEIVED") return "#52c41a";
   if (type === "REQUEST_PENDING") return "#faad14";
   if (type === "REQUEST_REJECTED") return "#999";
-
+if (type === "DEPOSIT") return "#1890ff";
   return "#1890ff";
 };
 const type = getType();
@@ -74,9 +87,8 @@ if (type === "SENT") {
       </View>
 
       <Text style={[styles.amount, { color: getColor() }]}>
-        {sign}
-{amount.toLocaleString()} VND
-      </Text>
+  {sign}{formatAmount(amount)}đ
+</Text>
     </View>
   );
 };
