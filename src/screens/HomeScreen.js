@@ -132,6 +132,13 @@ useFocusEffect(
     Go to Pending Requests
   </Text>
 </TouchableOpacity>
+
+<TouchableOpacity
+  style={styles.viewBtn}
+  onPress={() => navigation.navigate("UserReport")}
+>
+  <Text style={styles.viewText}>Analytics</Text>
+</TouchableOpacity>
     </View>
   );
 }

@@ -23,6 +23,7 @@ import SplitBillListScreen from "../screens/splitBill/SplitBillListScreen";
 import SplitBillDetailScreen from "../screens/splitBill/SplitBillDetailScreen";
 import RequestMoneyScreen from "../screens/RequestMoneyScreen";
 import PendingRequestsScreen from "../screens/PendingRequestsScreen";
+import UserReportScreen from "../screens/UserReportScreen";
 import * as Linking from 'expo-linking'
 
 const linking = {
@@ -61,6 +62,7 @@ export default function AppNavigator() {
 <Stack.Screen name="SplitDetail" component={SplitBillDetailScreen} />
        <Stack.Screen name="RequestMoney" component={RequestMoneyScreen}/>
        <Stack.Screen name="PendingRequests" component={PendingRequestsScreen}/>
+       <Stack.Screen name="UserReport" component={UserReportScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

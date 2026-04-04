@@ -22,8 +22,8 @@ const TransactionHistoryScreen = () => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-
 const [currentUserEmail, setCurrentUserEmail] = useState(null);
+const [userId, setUserId] = useState(null);
 
 
   const fetchTransactions = async (pageNumber = 0, isRefresh = false) => {
@@ -72,6 +72,7 @@ useEffect(() => {
     console.log("USER EMAIL:", decoded.sub);
 
     setCurrentUserEmail(decoded.sub);
+    setUserId(decoded.userId);
   };
 
   loadUser();
