@@ -8,6 +8,7 @@ import {
   View,
   TouchableOpacity,
   Image,
+  StatusBar,
 } from "react-native";
 import { getTransactions } from "../api/transactionApi";
 import TransactionItem from "../components/TransactionItem";
@@ -28,7 +29,6 @@ const TransactionHistoryScreen = () => {
   const [currentUserEmail, setCurrentUserEmail] = useState(null);
   const [selectedType, setSelectedType] = useState("ALL");
 
-  // ref để chặn spam — thay đổi không trigger re-render
   const isFetchingRef = useRef(false);
   const selectedTypeRef = useRef("ALL");
 
@@ -43,16 +43,12 @@ const TransactionHistoryScreen = () => {
   }, []);
 
   const fetchTransactions = async (pageNumber = 0, type = "ALL", isRefresh = false) => {
-    if (isFetchingRef.current) return; // chặn double-call
+    if (isFetchingRef.current) return;
     isFetchingRef.current = true;
 
     try {
       setLoading(true);
-
-      const filters = {
-        type: type === "ALL" ? undefined : type,
-      };
-
+      const filters = { type: type === "ALL" ? undefined : type };
       const res = await getTransactions(pageNumber, PAGE_SIZE, filters);
       const newData = res.data.content || [];
 
@@ -61,10 +57,9 @@ const TransactionHistoryScreen = () => {
       } else {
         setTransactions((prev) => [...prev, ...newData]);
       }
-
       setHasMore(newData.length === PAGE_SIZE);
     } catch (error) {
-      console.log("Transaction fetch error:", error?.response?.status, error?.response?.data || error.message);
+      console.log("Transaction fetch error:", error?.response?.status);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -79,7 +74,7 @@ const TransactionHistoryScreen = () => {
   }, [currentUserEmail]);
 
   const handleSelectType = (type) => {
-    if (type === selectedType) return; // không gọi lại nếu bấm cùng type
+    if (type === selectedType) return;
     selectedTypeRef.current = type;
     setSelectedType(type);
     setPage(0);
@@ -104,8 +99,8 @@ const TransactionHistoryScreen = () => {
   const renderFooter = () => {
     if (!loading) return null;
     return (
-      <View style={{ padding: 16 }}>
-        <ActivityIndicator size="small" color={COLORS.primary} />
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#0F172A" />
       </View>
     );
   };
@@ -114,56 +109,70 @@ const TransactionHistoryScreen = () => {
     if (loading) return null;
     return (
       <View style={styles.emptyContainer}>
-        <Text style={{ color: "#888" }}>No transactions yet</Text>
+        <Text style={styles.emptyText}>No transactions found</Text>
       </View>
     );
   };
 
   if (!currentUserEmail) {
     return (
-      <View style={{ flex: 1, justifyContent: "center" }}>
-        <ActivityIndicator color={COLORS.primary} />
+      <View style={styles.center}>
+        <ActivityIndicator color="#0F172A" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* HEADER */}
+      <StatusBar barStyle="dark-content" />
+      
+      {/* MINIMALIST HEADER */}
       <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>History</Text>
+          <Text style={styles.subtitle}>All your activities in one place</Text>
+        </View>
         <Image source={logo} style={styles.logo} />
-        <Text style={styles.title}>Transactions</Text>
-        <Text style={styles.subtitle}>Your transaction history</Text>
       </View>
 
-      {/* TYPE FILTER BUTTONS */}
-      <View style={styles.typeRow}>
-        {TYPES.map((type) => (
-          <TouchableOpacity
-            key={type}
-            style={[
-              styles.typeButton,
-              selectedType === type && styles.typeButtonActive,
-            ]}
-            onPress={() => handleSelectType(type)}
-          >
-            <Text style={{ color: selectedType === type ? "#fff" : "#333", fontSize: 13 }}>
-              {type}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      {/* FILTER CHIPS */}
+      <View style={styles.filterWrapper}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={TYPES}
+          keyExtractor={(item) => item}
+          contentContainerStyle={styles.typeRow}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={[
+                styles.typeButton,
+                selectedType === item && styles.typeButtonActive,
+              ]}
+              onPress={() => handleSelectType(item)}
+            >
+              <Text style={[
+                styles.typeText,
+                selectedType === item && styles.typeTextActive
+              ]}>
+                {item.charAt(0) + item.slice(1).toLowerCase()}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
       </View>
 
-      {/* LIST */}
+      {/* TRANSACTION LIST */}
       <FlatList
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: SIZES.padding }}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
         data={transactions}
-        keyExtractor={(item, index) =>
-          item.id ? item.id.toString() + "_" + index : index.toString()
-        }
+        keyExtractor={(item, index) => item.id?.toString() || index.toString()}
         renderItem={({ item }) => (
-          <TransactionItem item={item} currentUserEmail={currentUserEmail} />
+          <View style={styles.itemWrapper}>
+            <TransactionItem item={item} currentUserEmail={currentUserEmail} />
+          </View>
         )}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.3}
@@ -173,10 +182,9 @@ const TransactionHistoryScreen = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[COLORS.primary]}
+            tintColor="#0F172A"
           />
         }
-        keyboardShouldPersistTaps="handled"
       />
     </View>
   );
@@ -187,46 +195,92 @@ export default TransactionHistoryScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: "#FFFFFF", // White clean background
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 20,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 20,
   },
   logo: {
-    width: 60,
-    height: 60,
-    marginBottom: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    opacity: 0.8,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: COLORS.primary,
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#0F172A",
+    letterSpacing: -0.5,
   },
   subtitle: {
-    color: COLORS.secondary,
-    marginTop: 4,
+    fontSize: 14,
+    color: "#64748B",
+    marginTop: 2,
+  },
+  filterWrapper: {
+    marginBottom: 10,
+  },
+  typeRow: {
+    paddingHorizontal: 24,
+    gap: 8,
+    paddingBottom: 10,
+  },
+  typeButton: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: "#F1F5F9",
+    borderWidth: 0,
+  },
+  typeButtonActive: {
+    backgroundColor: "#0F172A",
+  },
+  typeText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#475569",
+  },
+  typeTextActive: {
+    color: "#FFFFFF",
+  },
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    paddingTop: 10,
+  },
+  itemWrapper: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 16,
+    marginBottom: 12,
+    padding: 4, // Padding nhẹ bao quanh item component cũ
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+  },
+  footerLoader: {
+    paddingVertical: 20,
+    alignItems: "center",
   },
   emptyContainer: {
     alignItems: "center",
-    marginTop: 50,
+    justifyContent: "center",
+    marginTop: 100,
   },
-  typeRow: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    marginBottom: 10,
-    gap: 8,
-  },
-  typeButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    backgroundColor: "#f5f5f5",
-  },
-  typeButtonActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+  emptyText: {
+    color: "#94A3B8",
+    fontSize: 16,
+    fontWeight: "500",
   },
 });
