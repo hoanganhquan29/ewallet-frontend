@@ -16,7 +16,6 @@ const [loading, setLoading] = useState(false)
 const [totalPages, setTotalPages] = useState(1)
 
 const [action, setAction] = useState("")
-const [userId, setUserId] = useState("")
 const [from, setFrom] = useState("")
 const [to, setTo] = useState("")
 const [showFrom, setShowFrom] = useState(false);
@@ -30,7 +29,6 @@ const fetchLogs = async (customPage = page) => {
     const res = await getAuditLogs({
       page: customPage,
       action,
-      userId,
       from,
       to
     });
@@ -62,8 +60,9 @@ useEffect(() => {
   fetchLogs(0)   
 }, [action, userId, from, to])
 const getColor = (action) => {
-  if (action === "LOCK_USER" || action === "DELETE_USER") return "red";
-  if (action === "LOGIN") return "green";
+  if (action === "LOCK_USER" || action === "DELETE_USER" || action === "LOGIN_FAILED" || action === "LOGIN_BLOCKED" || action === "ACCOUNT_LOCKED") return "red";
+  if (action === "LOGIN_SUCCESS_2FA" || action === "LOGIN_GOOGLE") return "green";
+  if (action === "OTP_SENT" || action === "LOGIN_PASSWORD_OK") return "orange";
   return COLORS.primary;
 };
 return (
@@ -85,32 +84,29 @@ return (
 
     {/* ACTION */}
     <Picker
-      selectedValue={action}
-      onValueChange={(v) => {
-        setLogs([])
-        setPage(0)
-        setTotalPages(1)
-        setAction(v)
-      }}
-    >
-      <Picker.Item label="All Actions" value="" />
-      <Picker.Item label="LOGIN" value="LOGIN" />
-      <Picker.Item label="LOCK_USER" value="LOCK_USER" />
-      <Picker.Item label="DELETE_USER" value="DELETE_USER" />
-    </Picker>
+  selectedValue={action}
+  onValueChange={(v) => {
+    setLogs([])
+    setPage(0)
+    setTotalPages(1)
+    setAction(v)
+  }}
+>
+  <Picker.Item label="All Actions" value="" />
+  <Picker.Item label="Login Success (2FA)" value="LOGIN_SUCCESS_2FA" />
+  
+  <Picker.Item label="Login Password OK" value="LOGIN_PASSWORD_OK" />
+  <Picker.Item label="Login Failed" value="LOGIN_FAILED" />
+  <Picker.Item label="Login Blocked" value="LOGIN_BLOCKED" />
+  <Picker.Item label="Account Locked" value="ACCOUNT_LOCKED" />
+  <Picker.Item label="OTP Sent" value="OTP_SENT" />
+  <Picker.Item label="Lock User" value="LOCK_USER" />
+  <Picker.Item label="Unlock User" value="UNLOCK_USER" />
+  <Picker.Item label="Delete User" value="DELETE_USER" />
+ 
+</Picker>
 
-    {/* USER ID */}
-    <TextInput
-      placeholder="User ID"
-      value={userId}
-      onChangeText={(text) => {
-        setLogs([])
-        setPage(0)
-        setTotalPages(1)
-        setUserId(text)
-      }}
-      style={styles.input}
-    />
+    
 
     {/* FROM DATE */}
     <TouchableOpacity
