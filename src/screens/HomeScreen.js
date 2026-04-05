@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Image,
   Alert,
+  ScrollView,
 } from "react-native";
 
 import { COLORS, SIZES, SHADOW } from "../theme/theme";
@@ -39,198 +40,238 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-useFocusEffect(
-  useCallback(() => {
-    loadBalance();
-  }, [])
-);
+  useFocusEffect(
+    useCallback(() => {
+      loadBalance();
+    }, [])
+  );
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       
-      {/* HEADER */}
+      {/* HEADER SECTION */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Image source={logo} style={styles.logo} />
+        <View>
+          <Text style={styles.greeting}>Hello,</Text>
           <Text style={styles.appName}>E-Wallet</Text>
         </View>
-
-        <TouchableOpacity onPress={handleLogout}>
-          <Text style={styles.logout}>Logout</Text>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+          <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
 
-      {/* BALANCE */}
-      <View style={styles.card}>
+      {/* BALANCE CARD - Focus of the screen */}
+      <View style={styles.balanceCard}>
         <Text style={styles.cardLabel}>Current Balance</Text>
-
         {loading ? (
-          <ActivityIndicator color="white" />
+          <ActivityIndicator color="white" style={{ marginTop: 10 }} />
         ) : (
-          <Text style={styles.balance}>
-            {balance?.toLocaleString()} ₫
+          <Text style={styles.balanceValue}>
+            {balance?.toLocaleString()} <Text style={styles.currency}>VND</Text>
           </Text>
         )}
       </View>
 
-      {/* ACTIONS */}
-      <View style={styles.actions}>
+      {/* QUICK ACTIONS - Minimalist Grid */}
+      <View style={styles.actionRow}>
         <TouchableOpacity
           style={styles.actionBtn}
           onPress={() => navigation.navigate("Deposit")}
         >
-          <Text style={styles.actionText}>Deposit</Text>
+          <View style={[styles.dot, { backgroundColor: '#4ADE80' }]} />
+          <Text style={styles.actionBtnText}>Deposit</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.actionBtn}
           onPress={() => navigation.navigate("Transfer")}
         >
-          <Text style={styles.actionText}>Transfer</Text>
+          <View style={[styles.dot, { backgroundColor: '#60A5FA' }]} />
+          <Text style={styles.actionBtnText}>Transfer</Text>
         </TouchableOpacity>
       </View>
 
-      {/* VIEW TRANSACTIONS */}
-      <TouchableOpacity
-        style={styles.viewBtn}
-        onPress={() => navigation.navigate("Transactions")}
-      >
-        <Text style={styles.viewText}>View Transactions</Text>
-      </TouchableOpacity>
+      {/* FEATURES LIST */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Services</Text>
+        
+        <TouchableOpacity 
+          style={styles.listItem} 
+          onPress={() => navigation.navigate("Transactions")}
+        >
+          <Text style={styles.listItemText}>Transaction History</Text>
+          <Text style={styles.arrow}>→</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity 
-  style={styles.button} 
-  onPress={() => navigation.navigate("SplitList")}
->
-  <Text style={styles.buttonText}>Split Bill</Text>
-</TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.listItem} 
+          onPress={() => navigation.navigate("SplitList")}
+        >
+          <Text style={styles.listItemText}>Split Bill</Text>
+          <Text style={styles.arrow}>→</Text>
+        </TouchableOpacity>
 
-<TouchableOpacity
-  onPress={() => navigation.navigate("RequestMoney")}
-  style={{
-    backgroundColor: "#28a745",
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 20,
-  }}
->
-  <Text style={{ color: "#fff", textAlign: "center" }}>
-    Go to Request Money
-  </Text>
-</TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.listItem} 
+          onPress={() => navigation.navigate("UserReport")}
+        >
+          <Text style={styles.listItemText}>Spending Analytics</Text>
+          <Text style={styles.arrow}>→</Text>
+        </TouchableOpacity>
+      </View>
 
-<TouchableOpacity
-  onPress={() => navigation.navigate("PendingRequests")}
-  style={{
-    backgroundColor: "#28a745",
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 20,
-  }}
->
-  <Text style={{ color: "#fff", textAlign: "center" }}>
-    Go to Pending Requests
-  </Text>
-</TouchableOpacity>
+      {/* REQUEST SECTION - Clean Sub-buttons */}
+      <View style={styles.requestContainer}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("RequestMoney")}
+          style={[styles.requestBtn, { backgroundColor: '#F0FDF4' }]}
+        >
+          <Text style={[styles.requestBtnText, { color: '#166534' }]}>Request Money</Text>
+        </TouchableOpacity>
 
-<TouchableOpacity
-  style={styles.viewBtn}
-  onPress={() => navigation.navigate("UserReport")}
->
-  <Text style={styles.viewText}>Analytics</Text>
-</TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("PendingRequests")}
+          style={[styles.requestBtn, { backgroundColor: '#FFF7ED' }]}
+        >
+          <Text style={[styles.requestBtnText, { color: '#9A3412' }]}>Pending</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={{ height: 40 }} />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    padding: SIZES.padding,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
   },
-
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
+    alignItems: "flex-end",
+    marginTop: 60,
+    marginBottom: 30,
   },
-
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
+  greeting: {
+    fontSize: 16,
+    color: '#94A3B8',
   },
-
-  logo: {
-    width: 30,
-    height: 30,
-    marginRight: 8,
-  },
-
   appName: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.primary,
+    fontSize: 24,
+    fontWeight: "800",
+    color: '#1E293B',
   },
-
-  logout: {
-    color: "red",
-    fontWeight: "500",
+  logoutBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: '#FFF1F2',
   },
-
-  card: {
-    backgroundColor: COLORS.primary,
-    padding: 20,
-    borderRadius: SIZES.radius,
-    marginBottom: 20,
-    ...SHADOW,
-  },
-
-  cardLabel: {
-    color: "#ccc",
-    marginBottom: 5,
-  },
-
-  balance: {
-    color: "white",
-    fontSize: 28,
+  logoutText: {
+    color: '#E11D48',
+    fontSize: 12,
     fontWeight: "700",
   },
-
-  actions: {
+  balanceCard: {
+    backgroundColor: '#0F172A',
+    padding: 28,
+    borderRadius: 32,
+    marginBottom: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  cardLabel: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  balanceValue: {
+    color: '#FFFFFF',
+    fontSize: 34,
+    fontWeight: "700",
+    marginTop: 10,
+  },
+  currency: {
+    fontSize: 18,
+    color: '#64748B',
+  },
+  actionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginBottom: 35,
   },
-
   actionBtn: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    padding: 15,
-    borderRadius: SIZES.radius,
-    alignItems: "center",
-    marginHorizontal: 5,
+    flex: 0.47,
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: '#F1F5F9',
   },
-
-  actionText: {
-    color: COLORS.primary,
-    fontWeight: "500",
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 8,
   },
-
-  viewBtn: {
-    marginTop: 20,
-    padding: 15,
-    borderRadius: SIZES.radius,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
+  actionBtnText: {
+    fontWeight: '600',
+    color: '#334155',
+    fontSize: 15,
   },
-
-  viewText: {
-    color: COLORS.primary,
-    fontWeight: "600",
+  section: {
+    marginBottom: 25,
   },
-  
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 15,
+  },
+  listItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 18,
+    paddingHorizontal: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  listItemText: {
+    fontSize: 16,
+    color: '#475569',
+    fontWeight: '500',
+  },
+  arrow: {
+    fontSize: 18,
+    color: '#CBD5E1',
+  },
+  requestContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  requestBtn: {
+    flex: 0.48,
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  requestBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
 });
