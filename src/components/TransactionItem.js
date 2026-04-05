@@ -8,48 +8,38 @@ const TransactionItem = ({ item, currentUserEmail }) => {
 
 
 const getType = () => {
-  const senderEmail = item.sender?.email;
-  const receiverEmail = item.receiver?.email;
+  const sender = item.senderEmail;
+  const receiver = item.receiverEmail;
 
-  // ===== DEPOSIT =====
-  if (!item.sender && item.receiver) {
-    return "DEPOSIT";
-  }
+  if (item.type === "DEPOSIT") return "DEPOSIT";
 
-  // ===== TRANSFER =====
   if (item.type === "TRANSFER") {
-    if (senderEmail === currentUserEmail) return "SENT";
-    if (receiverEmail === currentUserEmail) return "RECEIVED";
+    if (sender === currentUserEmail) return "SENT";
+    if (receiver === currentUserEmail) return "RECEIVED";
   }
 
-  // ===== REQUEST =====
   if (item.type === "REQUEST") {
     if (item.status === "PENDING") return "REQUEST_PENDING";
     if (item.status === "REJECTED") return "REQUEST_REJECTED";
 
     if (item.status === "SUCCESS") {
-      if (senderEmail === currentUserEmail) return "SENT";
-      if (receiverEmail === currentUserEmail) return "RECEIVED";
+      if (sender === currentUserEmail) return "SENT";
+      if (receiver === currentUserEmail) return "RECEIVED";
     }
   }
-
-  // ===== FALLBACK =====
-  if (receiverEmail === currentUserEmail) return "RECEIVED";
-  if (senderEmail === currentUserEmail) return "SENT";
 
   return "UNKNOWN";
 };
 const getDisplayText = () => {
-  const senderEmail = item.sender?.email;
-  const receiverEmail = item.receiver?.email;
-
+  const sender = item.senderEmail;
+  const receiver = item.receiverEmail;
   const type = getType();
 
-  if (type === "SENT") return `To: ${receiverEmail}`;
-  if (type === "RECEIVED") return `From: ${senderEmail}`;
-  if (type === "DEPOSIT") return "Deposit (Bank)";
+  if (type === "SENT") return `To: ${receiver}`;
+  if (type === "RECEIVED") return `From: ${sender}`;
+  if (type === "DEPOSIT") return "Deposit";
 
-  if (type === "REQUEST_PENDING") return `Request to ${senderEmail}`;
+  if (type === "REQUEST_PENDING") return `Request from ${sender}`;
   if (type === "REQUEST_REJECTED") return `Request rejected`;
 
   return "";
@@ -67,6 +57,8 @@ if (type === "DEPOSIT") return "#1890ff";
 const type = getType();
 
 let sign = "";
+if (type === "SENT") sign = "-";
+if (type === "RECEIVED") sign = "+";
 let amount = item.amount;
 
 if (type === "SENT") {
@@ -82,7 +74,7 @@ if (type === "SENT") {
         <Text style={styles.type}>{getType()}</Text>
         <Text style={styles.subText}>{getDisplayText()}</Text>
         <Text style={styles.date}>
-          {new Date(item.createdAt).toLocaleString()}
+          {item.date}
         </Text>
       </View>
 
