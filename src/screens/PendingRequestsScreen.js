@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  StatusBar,
 } from "react-native";
 import {
   getPendingRequests,
@@ -38,9 +39,7 @@ export default function PendingRequestsScreen() {
   const handleAccept = async (id) => {
     try {
       await acceptRequest(id);
-      Alert.alert("Success", "Accepted");
-
-      // remove item khỏi list
+      Alert.alert("Success", "Request accepted successfully");
       setData((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
       console.log("ACCEPT ERROR:", err.response?.data || err.message);
@@ -51,8 +50,7 @@ export default function PendingRequestsScreen() {
   const handleReject = async (id) => {
     try {
       await rejectRequest(id);
-      Alert.alert("Rejected");
-
+      Alert.alert("Rejected", "Request has been declined");
       setData((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
       console.log("REJECT ERROR:", err.response?.data || err.message);
@@ -63,25 +61,31 @@ export default function PendingRequestsScreen() {
   const renderItem = ({ item }) => {
     return (
       <View style={styles.card}>
-        <Text style={styles.email}>
-          {item.receiver?.email || "Unknown"}
-        </Text>
-
-        <Text style={styles.amount}>{item.amount} VND</Text>
+        <View style={styles.cardInfo}>
+          <Text style={styles.label}>From</Text>
+          <Text style={styles.email} numberOfLines={1}>
+            {item.receiver?.email || "Unknown User"}
+          </Text>
+          <Text style={styles.amount}>
+            {item.amount?.toLocaleString()} <Text style={styles.currency}>VND</Text>
+          </Text>
+        </View>
 
         <View style={styles.actions}>
           <TouchableOpacity
-            style={[styles.btn, styles.accept]}
-            onPress={() => handleAccept(item.id)}
+            style={[styles.btn, styles.rejectBtn]}
+            onPress={() => handleReject(item.id)}
+            activeOpacity={0.7}
           >
-            <Text style={styles.btnText}>Accept</Text>
+            <Text style={styles.rejectText}>Decline</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.btn, styles.reject]}
-            onPress={() => handleReject(item.id)}
+            style={[styles.btn, styles.acceptBtn]}
+            onPress={() => handleAccept(item.id)}
+            activeOpacity={0.7}
           >
-            <Text style={styles.btnText}>Reject</Text>
+            <Text style={styles.acceptText}>Accept</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -89,57 +93,141 @@ export default function PendingRequestsScreen() {
   };
 
   if (loading) {
-    return <ActivityIndicator style={{ marginTop: 50 }} />;
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#0F172A" />
+      </View>
+    );
   }
 
   return (
-    <FlatList
-      data={data}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      contentContainerStyle={{ padding: 16 }}
-      ListEmptyComponent={
-        <Text style={{ textAlign: "center" }}>No pending requests</Text>
-      }
-    />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Pending</Text>
+        <Text style={styles.headerSubtitle}>You have {data.length} requests waiting</Text>
+      </View>
+
+      <FlatList
+        data={data}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderItem}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>All caught up!</Text>
+            <Text style={styles.emptySubText}>No pending requests at the moment.</Text>
+          </View>
+        }
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: "#64748B",
+    marginTop: 4,
+  },
+  listContent: {
+    padding: 24,
+    paddingTop: 10,
+  },
   card: {
-    backgroundColor: "#fff",
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 10,
-    elevation: 2,
+    backgroundColor: "#F8FAFC",
+    padding: 20,
+    marginBottom: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+  },
+  cardInfo: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#94A3B8",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 4,
   },
   email: {
-    fontWeight: "bold",
-    marginBottom: 5,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1E293B",
+    marginBottom: 8,
   },
   amount: {
-    fontSize: 16,
-    marginBottom: 10,
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  currency: {
+    fontSize: 14,
+    fontWeight: "400",
+    color: "#64748B",
   },
   actions: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    gap: 12,
   },
   btn: {
     flex: 1,
-    padding: 10,
-    borderRadius: 6,
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: "center",
-    marginHorizontal: 5,
+    justifyContent: "center",
   },
-  accept: {
-    backgroundColor: "green",
+  acceptBtn: {
+    backgroundColor: "#0F172A",
   },
-  reject: {
-    backgroundColor: "red",
+  rejectBtn: {
+    backgroundColor: "#F1F5F9",
   },
-  btnText: {
-    color: "#fff",
-    fontWeight: "bold",
+  acceptText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  rejectText: {
+    color: "#64748B",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  emptyContainer: {
+    marginTop: 100,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: "#94A3B8",
+    marginTop: 8,
   },
 });
