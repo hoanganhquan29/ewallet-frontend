@@ -1,6 +1,6 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-
+import { useEffect } from "react";
 import HomeScreen from "../screens/HomeScreen";
 import LoginScreen from "../screens/LoginScreen";
 import OtpScreen from "../screens/OtpScreen";
@@ -9,7 +9,7 @@ import TransactionHistoryScreen from "../screens/TransactionHistoryScreen";
 import PaymentScreen from "../screens/PaymentScreen";
 import DepositScreen from "../screens/DepositScreen";
 import AdminHomeScreen from "../screens/admin/AdminHomeScreen";
-
+import React from "react";
 import UserListScreen from "../screens/admin/UserListScreen";
 import TransactionListScreen from "../screens/admin/TransactionListScreen";
 import SuspiciousScreen from "../screens/admin/SuspiciousScreen";
@@ -24,22 +24,45 @@ import SplitBillDetailScreen from "../screens/splitBill/SplitBillDetailScreen";
 import RequestMoneyScreen from "../screens/RequestMoneyScreen";
 import PendingRequestsScreen from "../screens/PendingRequestsScreen";
 import UserReportScreen from "../screens/UserReportScreen";
-import * as Linking from 'expo-linking'
+import * as Linking from 'expo-linking';
 
 const linking = {
-  prefixes: ['myapp://'],
+  prefixes: ['exp://'], 
   config: {
     screens: {
-       Home: 'payment-success',
-  Deposit: 'payment-cancel'
+      Success: 'payment-success',  
+      Deposit: 'payment-cancel'
     }
   }
 }
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
+
+  const navigationRef = React.useRef();
+
+  useEffect(() => {
+    const handleDeepLink = (event) => {
+      const url = event.url;
+
+      console.log("DEEPLINK:", url);
+
+      if (url.includes("payment-success")) {
+        navigationRef.current?.navigate("Success");
+      }
+
+      if (url.includes("payment-cancel")) {
+        navigationRef.current?.navigate("Deposit");
+      }
+    };
+
+    const subscription = Linking.addEventListener("url", handleDeepLink);
+
+    return () => subscription.remove();
+  }, []);
+
   return (
-    <NavigationContainer linking={linking}>
+    <NavigationContainer ref={navigationRef} linking={linking}>
       <Stack.Navigator>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />

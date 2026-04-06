@@ -20,6 +20,13 @@ axiosClient.interceptors.request.use(async (config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  if (config.method === "post") {
+    const idempotencyKey =
+      Date.now().toString() +
+      Math.random().toString(36).substring(2);
+
+    config.headers["Idempotency-Key"] = idempotencyKey;
+  }
 
   return config;
 });
