@@ -5,7 +5,18 @@ export const getBalance = () => {
   return axiosClient.get("/wallet/balance");
 };
 export const requestTransfer = (data) => {
-  return axiosClient.post("/wallet/transfer/request", data);
+  const idempotencyKey =
+    Date.now().toString() + Math.random().toString(36).substring(2);
+
+  return axiosClient.post(
+    "/wallet/transfer/request",
+    data,
+    {
+      headers: {
+        "Idempotency-Key": idempotencyKey,
+      },
+    }
+  );
 };
 
 export const verifyTransfer = (data) => {

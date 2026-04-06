@@ -6,12 +6,20 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert
+  Alert,
+  Image,
+  SafeAreaView,
+  StatusBar,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard
 } from 'react-native'
 import { register } from '../api/authApi'
-import { Image } from "react-native";
 import { COLORS, SIZES, SHADOW } from "../theme/theme";
 import logo from "../assets/logo.png";
+
 export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -20,7 +28,6 @@ export default function RegisterScreen({ navigation }) {
   const [loading, setLoading] = useState(false)
 
   const handleRegister = async () => {
-    // validation
     if (!email || !phone || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill all fields')
       return
@@ -33,19 +40,10 @@ export default function RegisterScreen({ navigation }) {
 
     try {
       setLoading(true)
-
-      await register({
-        email,
-        phone,
-        password
-      })
-
+      await register({ email, phone, password })
       Alert.alert('Success', 'Account created successfully')
-
       navigation.navigate('Login')
     } catch (err) {
-      console.log(err.response?.data)
-
       Alert.alert(
         'Register failed',
         err.response?.data?.message || 'Something went wrong'
@@ -56,147 +54,213 @@ export default function RegisterScreen({ navigation }) {
   }
 
   return (
-  <View style={styles.container}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" />
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.container}
+        >
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {/* HEADER */}
+            <View style={styles.header}>
+              <View style={styles.logoWrapper}>
+                <Image source={logo} style={styles.logo} />
+              </View>
+              <Text style={styles.headerSubtitle}>Join us today</Text>
+              <Text style={styles.headerTitle}>Create Account</Text>
+              <Text style={styles.description}>
+                Start your digital journey with the most secure wallet.
+              </Text>
+            </View>
 
-    {/* HEADER */}
-    <View style={styles.header}>
-      <Image source={logo} style={styles.logo} />
-      <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Sign up to get started</Text>
-    </View>
+            {/* FORM SECTION */}
+            <View style={styles.formContainer}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Email Address</Text>
+                <TextInput
+                  placeholder="example@mail.com"
+                  placeholderTextColor="#AEAEB2"
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
 
-    {/* EMAIL */}
-    <View style={styles.inputContainer}>
-      <TextInput
-        placeholder="Email"
-        placeholderTextColor="#9CA3AF"
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-      />
-    </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Phone Number</Text>
+                <TextInput
+                  placeholder="090 123 4567"
+                  placeholderTextColor="#AEAEB2"
+                  style={styles.input}
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                />
+              </View>
 
-    {/* PHONE */}
-    <View style={styles.inputContainer}>
-      <TextInput
-        placeholder="Phone"
-        placeholderTextColor="#9CA3AF"
-        style={styles.input}
-        value={phone}
-        onChangeText={setPhone}
-        keyboardType="phone-pad"
-      />
-    </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <TextInput
+                  placeholder="••••••••"
+                  placeholderTextColor="#AEAEB2"
+                  style={styles.input}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+              </View>
 
-    {/* PASSWORD */}
-    <View style={styles.inputContainer}>
-      <TextInput
-        placeholder="Password"
-        placeholderTextColor="#9CA3AF"
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-    </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Confirm Password</Text>
+                <TextInput
+                  placeholder="••••••••"
+                  placeholderTextColor="#AEAEB2"
+                  style={styles.input}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry
+                />
+              </View>
 
-    {/* CONFIRM PASSWORD */}
-    <View style={styles.inputContainer}>
-      <TextInput
-        placeholder="Confirm Password"
-        placeholderTextColor="#9CA3AF"
-        style={styles.input}
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
-    </View>
+              {/* ACTION BUTTON */}
+              <TouchableOpacity
+                style={[styles.registerButton, loading && { opacity: 0.7 }]}
+                onPress={handleRegister}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                {loading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.registerButtonText}>Sign Up</Text>
+                )}
+              </TouchableOpacity>
+            </View>
 
-    {/* BUTTON */}
-    <TouchableOpacity
-      style={[styles.button, loading && { opacity: 0.6 }]}
-      onPress={handleRegister}
-      disabled={loading}
-    >
-      {loading ? (
-        <ActivityIndicator color="white" />
-      ) : (
-        <Text style={styles.buttonText}>Register</Text>
-      )}
-    </TouchableOpacity>
-
-    {/* LINK */}
-    <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-      <Text style={styles.link}>
-        Already have an account? Login
-      </Text>
-    </TouchableOpacity>
-
-  </View>
-);
+            {/* FOOTER */}
+            <TouchableOpacity 
+              onPress={() => navigation.navigate("Login")}
+              style={styles.loginLink}
+            >
+              <Text style={styles.loginLinkText}>
+                Already have an account? <Text style={styles.loginHighlight}>Login</Text>
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
+  );
 }
+
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    padding: SIZES.padding,
-    justifyContent: "center",
   },
-
+  scrollContent: {
+    paddingHorizontal: 28,
+    paddingTop: 40,
+    paddingBottom: 20,
+  },
   header: {
-    alignItems: "center",
-    marginBottom: 25,
+    marginBottom: 32,
   },
-
+  logoWrapper: {
+    backgroundColor: "#F2F2F7",
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
   logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 10,
+    width: 32,
+    height: 32,
+    resizeMode: "contain",
   },
-
-  title: {
-    fontSize: 28,
+  headerSubtitle: {
+    fontSize: 12,
+    color: "#8E8E93",
     fontWeight: "700",
-    color: COLORS.primary,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
   },
-
-  subtitle: {
-    color: COLORS.secondary,
-    marginTop: 5,
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: "800",
+    color: "#1C1C1E",
+    marginTop: 4,
   },
-
-  inputContainer: {
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.radius,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 15,
-    paddingHorizontal: 12,
+  description: {
+    fontSize: 15,
+    color: "#636366",
+    marginTop: 8,
+    lineHeight: 22,
   },
-
+  formContainer: {
+    width: '100%',
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#1C1C1E",
+    textTransform: "uppercase",
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
   input: {
-    height: 50,
-    color: COLORS.primary,
+    height: 54,
+    backgroundColor: "#F9F9F9",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: "#000",
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
   },
-
-  button: {
-    backgroundColor: COLORS.primary,
-    padding: 15,
-    borderRadius: SIZES.radius,
+  registerButton: {
+    backgroundColor: "#000000",
+    height: 60,
+    borderRadius: 18,
     alignItems: "center",
-    marginTop: 10,
-    ...SHADOW,
+    justifyContent: "center",
+    marginTop: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
   },
-
-  buttonText: {
-    color: COLORS.white,
-    fontWeight: "600",
+  registerButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
   },
-
-  link: {
-    marginTop: 20,
-    textAlign: "center",
-    color: COLORS.secondary,
+  loginLink: {
+    marginTop: 28,
+    alignItems: "center",
+  },
+  loginLinkText: {
+    fontSize: 14,
+    color: "#8E8E93",
+    fontWeight: "500",
+  },
+  loginHighlight: {
+    color: "#000000",
+    fontWeight: "700",
   },
 });
