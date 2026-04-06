@@ -1,157 +1,240 @@
-import { useEffect, useState } from 'react'
-import { FlatList, Text, View } from 'react-native'
-import { getSuspicious } from '../../api/adminApi'
-import { StyleSheet, Image } from "react-native";
-import { COLORS, SIZES, SHADOW } from "../../theme/theme";
+import { useEffect, useState } from "react";
+import { FlatList, Text, View, StyleSheet, Image } from "react-native";
+import { getSuspicious } from "../../api/adminApi";
+import { COLORS, SIZES } from "../../theme/theme";
 import logo from "../../assets/logo.png";
-export default function SuspiciousScreen() {
-  const [data, setData] = useState([])
-  const [page, setPage] = useState(0)
 
-  const fetchData = async () => {
-    try {
-      const res = await getSuspicious(page)
-
-      console.log("SUSPICIOUS API:", res.data) // debug
-
-      setData(prev => [...prev, ...res.data.content]) // 🔥 QUAN TRỌNG
-    } catch (e) {
-      console.log("ERROR:", e)
-    }
-  }
-
-  useEffect(() => {
-    fetchData()
-  }, [page])
-
-  return (
-  <View style={styles.container}>
-
-    {/* HEADER */}
-    <View style={styles.header}>
-      <Image source={logo} style={styles.logo} />
-      <Text style={styles.title}>Suspicious</Text>
-      <Text style={styles.subtitle}>
-        High-risk transactions
-      </Text>
-    </View>
-
-    {/* LIST */}
-    <FlatList
-      contentContainerStyle={{ padding: SIZES.padding }}
-      data={data}
-      keyExtractor={(item, index) =>
-        item.id ? item.id.toString() + "_" + index : index.toString()
-      }
-      onEndReached={() => setPage(prev => prev + 1)}
-      renderItem={({ item }) => (
-        <View style={styles.card}>
-
-          {/* TOP */}
-          <View style={styles.rowBetween}>
-            <Text style={styles.warning}>⚠️ Suspicious</Text>
-            <Text style={styles.amount}>
-              {formatMoney(item.amount)}
-            </Text>
-          </View>
-
-          {/* USER FLOW */}
-          {item.sender && item.receiver && (
-            <Text style={styles.info}>
-              {item.sender.email} → {item.receiver.email}
-            </Text>
-          )}
-
-          {/* STATUS */}
-          <Text style={styles.status}>
-            Status: {item.status}
-          </Text>
-
-          {/* DATE */}
-          <Text style={styles.date}>
-            {formatDate(item.createdAt)}
-          </Text>
-
-        </View>
-      )}
-    />
-
-  </View>
-);
-}
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const formatMoney = (num) =>
-  new Intl.NumberFormat('vi-VN').format(num) + ' VND'
+  new Intl.NumberFormat("vi-VN").format(num) + " VND";
 
 const formatDate = (date) =>
-  new Date(date).toLocaleString('vi-VN')
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  new Date(date).toLocaleString("vi-VN");
 
-  header: {
-    alignItems: "center",
-    paddingVertical: 20,
-  },
+// ─── Status Badge ─────────────────────────────────────────────────────────────
 
-  logo: {
-    width: 60,
-    height: 60,
-    marginBottom: 8,
-  },
+const StatusBadge = ({ status }) => {
+  const isSuccess = status === "SUCCESS";
+  return (
+    <View style={[badge.wrap, isSuccess ? badge.success : badge.failed]}>
+      <Text style={[badge.text, isSuccess ? badge.successText : badge.failedText]}>
+        {status}
+      </Text>
+    </View>
+  );
+};
 
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: COLORS.primary,
-  },
+const badge = StyleSheet.create({
+  wrap: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  success: { backgroundColor: "#F0FDF4" },
+  failed: { backgroundColor: "#FFF1F2" },
+  text: { fontSize: 11, fontWeight: "700" },
+  successText: { color: "#16A34A" },
+  failedText: { color: "#E11D48" },
+});
 
-  subtitle: {
-    color: COLORS.secondary,
-    marginTop: 4,
-  },
+// ─── Suspicious Card ──────────────────────────────────────────────────────────
 
-  card: {
-    backgroundColor: "#fff5f5", // đỏ nhẹ (không gắt)
-    padding: 16,
-    borderRadius: SIZES.radius,
+const SuspiciousCard = ({ item }) => (
+  <View style={card.wrap}>
+    {/* Top Row */}
+    <View style={card.row}>
+      <View style={card.tagRow}>
+        <View style={card.dot} />
+        <Text style={card.warningLabel}>⚠ Suspicious</Text>
+      </View>
+      <Text style={card.amount}>{formatMoney(item.amount)}</Text>
+    </View>
+
+    {/* Route */}
+    {item.sender && item.receiver && (
+      <Text style={card.route}>
+        {item.sender.email} → {item.receiver.email}
+      </Text>
+    )}
+    {item.receiver && !item.sender && (
+      <Text style={card.route}>Deposit → {item.receiver.email}</Text>
+    )}
+
+    {/* Bottom Row */}
+    <View style={card.row}>
+      <StatusBadge status={item.status} />
+      <Text style={card.date}>{formatDate(item.createdAt)}</Text>
+    </View>
+  </View>
+);
+
+const card = StyleSheet.create({
+  wrap: {
+    backgroundColor: "#FFFFFF",
+    padding: 18,
+    borderRadius: 24,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#ffcccc",
-    ...SHADOW,
+    borderColor: "#FEE2E2",
+    shadowColor: "#F87171",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
   },
-
-  rowBetween: {
+  row: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
   },
-
-  warning: {
-    color: "red",
+  tagRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#F87171",
+    marginRight: 8,
+  },
+  warningLabel: {
+    fontSize: 13,
     fontWeight: "700",
+    color: "#E11D48",
   },
-
   amount: {
+    fontSize: 15,
     fontWeight: "700",
-    color: COLORS.primary,
+    color: "#1E293B",
   },
-
-  info: {
+  route: {
     marginTop: 6,
-    color: COLORS.secondary,
+    fontSize: 13,
+    color: "#94A3B8",
+    lineHeight: 18,
   },
-
-  status: {
-    marginTop: 8,
-    color: COLORS.secondary,
-  },
-
   date: {
-    marginTop: 6,
+    fontSize: 11,
+    color: "#CBD5E1",
+  },
+});
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
+export default function SuspiciousScreen() {
+  const [data, setData] = useState([]);
+  const [page, setPage] = useState(0);
+
+  const fetchData = async () => {
+    try {
+      const res = await getSuspicious(page);
+      setData((prev) => [...prev, ...res.data.content]);
+    } catch (e) {
+      console.log("ERROR:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [page]);
+
+  return (
+    <View style={styles.container}>
+
+      {/* ── HEADER ── */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Image source={logo} style={styles.logo} />
+          <View>
+            <Text style={styles.greeting}>Control Panel</Text>
+            <Text style={styles.title}>Suspicious</Text>
+          </View>
+        </View>
+        <View style={styles.countBadge}>
+          <Text style={styles.countText}>{data.length} flagged</Text>
+        </View>
+      </View>
+
+      {/* ── LIST ── */}
+      <FlatList
+        data={data}
+        keyExtractor={(item, index) =>
+          item.id ? `${item.id}_${index}` : `${index}`
+        }
+        contentContainerStyle={styles.listContent}
+        onEndReached={() => setPage((prev) => prev + 1)}
+        onEndReachedThreshold={0.4}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => <SuspiciousCard item={item} />}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No suspicious activity</Text>
+            <Text style={styles.emptySubText}>All transactions look normal</Text>
+          </View>
+        }
+      />
+    </View>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 24,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 56,
+    marginBottom: 12,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  logo: {
+    width: 40,
+    height: 40,
+    marginRight: 12,
+  },
+  greeting: {
+    fontSize: 13,
+    color: "#94A3B8",
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#1E293B",
+  },
+  countBadge: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: "#FFF1F2",
+  },
+  countText: {
     fontSize: 12,
-    color: COLORS.secondary,
+    fontWeight: "700",
+    color: "#E11D48",
+  },
+  listContent: {
+    paddingBottom: 40,
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingTop: 80,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1E293B",
+  },
+  emptySubText: {
+    fontSize: 13,
+    color: "#94A3B8",
+    marginTop: 6,
   },
 });

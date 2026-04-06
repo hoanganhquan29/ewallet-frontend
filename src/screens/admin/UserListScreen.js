@@ -1,318 +1,340 @@
-import { useEffect, useState } from 'react'
-import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Alert } from 'react-native'
-import { getUsers, lockUser, unlockUser, deleteUser } from '../../api/adminApi'
-import { updateUser } from '../../api/adminApi'
-import { StyleSheet, Image } from "react-native";
-import { COLORS, SIZES, SHADOW } from "../../theme/theme";
-import { Modal, TextInput } from "react-native"
-import logo from "../../assets/logo.png";
-export default function UserListScreen() {
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
-const [selectedUser, setSelectedUser] = useState(null)
-const [modalVisible, setModalVisible] = useState(false)
+import { useEffect, useState, useCallback } from 'react';
+import { 
+  View, Text, FlatList, ActivityIndicator, TouchableOpacity, 
+  Alert, StyleSheet, Image, Modal, ScrollView 
+} from 'react-native';
+import { getUsers, lockUser, unlockUser, deleteUser, updateUser } from '../../api/adminApi';
+import { COLORS, SIZES } from "../../theme/theme";
 
-const [role, setRole] = useState("")
-const [enabled, setEnabled] = useState(true)
-const openEditModal = (user) => {
-  setSelectedUser(user)
-  setRole(user.role) 
-  setModalVisible(true)
-}
+export default function UserListScreen({ navigation }) {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [role, setRole] = useState("");
+
   const fetchUsers = async () => {
     try {
-      const res = await getUsers()
-      setUsers(res.data)
+      setLoading(true);
+      const res = await getUsers();
+      setUsers(res.data);
     } catch (err) {
-      console.log(err)
+      console.log(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-const handleUpdate = async () => {
-  try {
-    await updateUser(selectedUser.email, {
-  email: selectedUser.email,
-  phone: selectedUser.phone,
-  role: role,
-  enabled: selectedUser.enabled === true,
-  locked: selectedUser.locked === true
-})
+  };
 
-    setModalVisible(false)
-    fetchUsers()
-  } catch (err) {
-    console.log("UPDATE ERROR:", err?.response?.data || err.message)
-  }
-}
-const handleLock = async (id) => {
-  console.log("CLICK LOCK:", id)
-
-  try {
-    const res = await lockUser(id)
-
-    console.log("LOCK SUCCESS:", res?.data)
-
-    fetchUsers()
-  } catch (err) {
-    console.log("LOCK ERROR:", err?.response?.data || err.message)
-  }
-}
-
-const handleUnlock = async (id) => {
-  console.log("CLICK UNLOCK:", id)
-
-  try {
-    const res = await unlockUser(id)
-
-    console.log("UNLOCK SUCCESS:", res?.data)
-
-    fetchUsers()
-  } catch (err) {
-    console.log("UNLOCK ERROR:", err?.response?.data || err.message)
-  }
-}
-
-const handleDelete = (id) => {
-  Alert.alert("Confirm", "Delete this user?", [
-    { text: "Cancel" },
-    {
-      text: "Delete",
-      onPress: async () => {
-        await deleteUser(id)
-        fetchUsers()
-      },
-    },
-  ])
-}
   useEffect(() => {
-    fetchUsers()
-  }, [])
+    fetchUsers();
+  }, []);
 
-  if (loading) {
+  const openEditModal = (user) => {
+    setSelectedUser(user);
+    setRole(user.role);
+    setModalVisible(true);
+  };
+
+  const handleUpdate = async () => {
+    try {
+      await updateUser(selectedUser.email, {
+        ...selectedUser,
+        role: role,
+      });
+      setModalVisible(false);
+      fetchUsers();
+    } catch (err) {
+      Alert.alert("Error", "Could not update user");
+    }
+  };
+
+  const renderUserItem = ({ item }) => (
+    <View style={styles.userCard}>
+      <View style={styles.cardInfo}>
+        <View style={styles.avatarPlaceholder}>
+          <Text style={styles.avatarText}>{item.email.charAt(0).toUpperCase()}</Text>
+        </View>
+        <View style={styles.userDetails}>
+          <Text style={styles.userEmail} numberOfLines={1}>{item.email}</Text>
+          <View style={styles.badgeContainer}>
+            <View style={[styles.roleBadge, { backgroundColor: item.role === 'ADMIN' ? '#EEF2FF' : '#F8FAFC' }]}>
+              <Text style={[styles.roleText, { color: item.role === 'ADMIN' ? '#4F46E5' : '#64748B' }]}>{item.role}</Text>
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: item.locked ? '#FFF1F2' : '#F0FDF4' }]}>
+              <Text style={[styles.statusText, { color: item.locked ? '#E11D48' : '#166534' }]}>
+                {item.locked ? "Locked" : "Active"}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.cardActions}>
+        <TouchableOpacity style={styles.actionIconBtn} onPress={() => openEditModal(item)}>
+          <Text style={styles.actionIconText}>Edit</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.actionIconBtn} 
+          onPress={() => item.locked ? unlockUser(item.email).then(fetchUsers) : lockUser(item.email).then(fetchUsers)}
+        >
+          <Text style={[styles.actionIconText, { color: item.locked ? '#059669' : '#D97706' }]}>
+            {item.locked ? "Unlock" : "Lock"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionIconBtn} onPress={() => handleDelete(item.email)}>
+          <Text style={[styles.actionIconText, { color: '#E11D48' }]}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const handleDelete = (email) => {
+    Alert.alert("Confirm Delete", `Are you sure you want to remove ${email}?`, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: async () => {
+          await deleteUser(email);
+          fetchUsers();
+      }},
+    ]);
+  };
+
   return (
-    <View style={styles.loadingContainer}>
-      <ActivityIndicator />
+    <View style={styles.container}>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>User Directory</Text>
+        <Text style={styles.headerSubtitle}>{users.length} total members</Text>
+      </View>
+
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator color="#0F172A" />
+        </View>
+      ) : (
+        <FlatList
+          data={users}
+          keyExtractor={(item) => item.email}
+          renderItem={renderUserItem}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+
+      {/* MODERN EDIT MODAL */}
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Update Role</Text>
+            <Text style={styles.modalSub}>{selectedUser?.email}</Text>
+
+            <View style={styles.roleSelector}>
+              {['USER', 'ADMIN'].map((r) => (
+                <TouchableOpacity 
+                  key={r}
+                  style={[styles.roleOption, role === r && styles.roleOptionSelected]}
+                  onPress={() => setRole(r)}
+                >
+                  <Text style={[styles.roleOptionText, role === r && styles.roleOptionTextSelected]}>{r}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveBtn} onPress={handleUpdate}>
+                <Text style={styles.saveBtnText}>Save Changes</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
-return (
-  <View style={styles.container}>
-
-    {/* HEADER */}
-    <View style={styles.header}>
-      <Image source={logo} style={styles.logo} />
-      <Text style={styles.title}>Users</Text>
-      <Text style={styles.subtitle}>Manage system users</Text>
-    </View>
-
-    {/* LIST */}
-    <FlatList
-      contentContainerStyle={{ padding: SIZES.padding }}
-      data={users}
-      keyExtractor={(item, index) =>
-        item.id ? item.id.toString() + "_" + index : index.toString()
-      }
-      renderItem={({ item }) => (
-        console.log("USER ITEM:", item),
-        <View style={styles.card}>
-  <Text style={styles.email}>{item.email}</Text>
-  <Text style={styles.role}>Role: {item.role}</Text>
-  <Text>Status: {item.locked ? "LOCKED" : "ACTIVE"}</Text>
-
-  <View style={styles.actions}>
-    <TouchableOpacity
-  style={styles.editBtn}
-  onPress={() => openEditModal(item)}
->
-  <Text style={styles.btnText}>Edit</Text>
-</TouchableOpacity>
-    {item.locked ? (
-      <TouchableOpacity
-        style={styles.unlockBtn}
-        onPress={() => handleUnlock(item.email)}
-      >
-        <Text style={styles.btnText}>Unlock</Text>
-      </TouchableOpacity>
-    ) : (
-      <TouchableOpacity
-        style={styles.lockBtn}
-        onPress={() => handleLock(item.email)}
-      >
-        <Text style={styles.btnText}>Lock</Text>
-      </TouchableOpacity>
-    )}
-
-    <TouchableOpacity
-      style={styles.deleteBtn}
-      onPress={() => handleDelete(item.email)}
-    >
-      <Text style={styles.btnText}>Delete</Text>
-    </TouchableOpacity>
-   
-  </View>
-</View>
-      )}
-    />
-<Modal visible={modalVisible} transparent animationType="slide">
-  <View style={{
-    flex: 1,
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.5)"
-  }}>
-    <View style={{
-      backgroundColor: "white",
-      margin: 20,
-      padding: 20,
-      borderRadius: 10
-    }}>
-
-      <Text style={{ fontSize: 18, fontWeight: "bold" }}>
-        Edit User
-      </Text>
-
-      <Text>Email: {selectedUser?.email}</Text>
-
-      <Text>Role</Text>
-      <Text style={{ marginTop: 10 }}>Role</Text>
-
-<View style={{ flexDirection: "row", marginVertical: 10 }}>
-
-  <TouchableOpacity
-    style={[
-      styles.roleBtn,
-      role === "USER" && styles.selectedRole
-    ]}
-    onPress={() => setRole("USER")}
-  >
-    <Text style={styles.btnText}>USER</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity
-    style={[
-      styles.roleBtn,
-      role === "ADMIN" && styles.selectedRole
-    ]}
-    onPress={() => setRole("ADMIN")}
-  >
-    <Text style={styles.btnText}>ADMIN</Text>
-  </TouchableOpacity>
-
-</View>
-      <TouchableOpacity
-        onPress={handleUpdate}
-        style={styles.editBtn}
-      >
-        <Text style={styles.btnText}>Save</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => setModalVisible(false)}>
-        <Text>Cancel</Text>
-      </TouchableOpacity>
-
-    </View>
-  </View>
-</Modal>
-  </View>
-);
-}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#FFFFFF',
   },
-
   header: {
-    alignItems: "center",
-    paddingVertical: 20,
+    paddingHorizontal: 24,
+    marginTop: 60,
+    marginBottom: 20,
   },
-
-  logo: {
-    width: 60,
-    height: 60,
-    marginBottom: 8,
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1E293B',
   },
-
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: COLORS.primary,
-  },
-
-  subtitle: {
-    color: COLORS.secondary,
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#94A3B8',
     marginTop: 4,
   },
-
-  card: {
-    backgroundColor: COLORS.white,
+  listContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+  },
+  userCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
     padding: 16,
-    borderRadius: SIZES.radius,
-    marginBottom: 12,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    ...SHADOW,
+    borderColor: '#F1F5F9',
+    // Shadow cho độ nổi khối
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
-
-  email: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.primary,
+  cardInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-
-  role: {
-    marginTop: 5,
-    color: COLORS.secondary,
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-
-  loadingContainer: {
+  avatarText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  userDetails: {
+    marginLeft: 12,
     flex: 1,
-    justifyContent: "center",
   },
-  actions: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  marginTop: 10,
-},
-
-lockBtn: {
-  backgroundColor: "orange",
-  padding: 8,
-  borderRadius: 6,
-},
-
-unlockBtn: {
-  backgroundColor: "green",
-  padding: 8,
-  borderRadius: 6,
-},
-
-deleteBtn: {
-  backgroundColor: "red",
-  padding: 8,
-  borderRadius: 6,
-},
-
-btnText: {
-  color: "#fff",
-  fontWeight: "600",
-},
-editBtn: {
-  backgroundColor: "blue",
-  padding: 8,
-  borderRadius: 6,
-},
-roleBtn: {
-  flex: 1,
-  backgroundColor: "gray",
-  padding: 10,
-  marginHorizontal: 5,
-  borderRadius: 6,
-  alignItems: "center"
-},
-
-selectedRole: {
-  backgroundColor: "blue"
-},
+  userEmail: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    marginTop: 6,
+  },
+  roleBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  roleText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  cardActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F8FAFC',
+  },
+  actionIconBtn: {
+    marginLeft: 20,
+  },
+  actionIconText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    padding: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1E293B',
+  },
+  modalSub: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 24,
+  },
+  roleSelector: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 16,
+    padding: 4,
+    marginBottom: 24,
+  },
+  roleOption: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  roleOptionSelected: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  roleOptionText: {
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  roleOptionTextSelected: {
+    color: '#0F172A',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  cancelBtnText: {
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  saveBtn: {
+    flex: 2,
+    backgroundColor: '#0F172A',
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  saveBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });

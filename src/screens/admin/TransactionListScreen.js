@@ -1,366 +1,527 @@
 import { useEffect, useState } from "react";
-import { FlatList, Text, View } from "react-native";
+import {
+  FlatList,
+  Text,
+  View,
+  StyleSheet,
+  Image,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Animated,
+} from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { getAllTransactions } from "../../api/adminApi";
-import { StyleSheet, Image } from "react-native";
 import { COLORS, SIZES, SHADOW } from "../../theme/theme";
 import logo from "../../assets/logo.png";
-import { TextInput, TouchableOpacity } from "react-native";
-import axios from "axios";
-import DateTimePicker from "@react-native-community/datetimepicker";
-export default function TransactionListScreen() {
-  const [transactions, setTransactions] = useState([]);
-  const [page, setPage] = useState(0);
-const [email, setEmail] = useState("");
-const [type, setType] = useState("");
-const [status, setStatus] = useState("");
-const [from, setFrom] = useState("");
-const [to, setTo] = useState("");
-const [showFromPicker, setShowFromPicker] = useState(false);
-const [showToPicker, setShowToPicker] = useState(false);
-const [reload, setReload] = useState(false);
-const fetchData = async () => {
-  try {
-    console.log("FETCH PAGE:", page);
 
-    let params = {
-      page,
-      size: 10,
-    };
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-    if (type) params.type = type;
-    if (status) params.status = status;
-    if (from) params.from = from.slice(0, 19);
-if (to) params.to = to.slice(0, 19);
-
-if (email) params.email = email;
-
-    const res = await getAllTransactions(params);
-
-    const newData = res.data.content;
-
-    console.log("NEW DATA:", newData.length);
-
-    if (page === 0) {
-      setTransactions(newData); 
-    } else {
-      setTransactions(prev => [...prev, ...newData]);
-    }
-
-  } catch (e) {
-    console.log("FETCH ERROR:", e);
-  }
-};
-const applyFilter = () => {
-  setTransactions([]);
-  setPage(0);
-  setReload(prev => !prev); 
-};
-useEffect(() => {
-  fetchData();
-}, [page, reload]);
-
-return (
-  <View style={styles.container}>
-
-    {/* HEADER */}
-    <View style={styles.header}>
-      <Image source={logo} style={styles.logo} />
-      <Text style={styles.title}>All Transactions</Text>
-      <Text style={styles.subtitle}>Monitor system activity</Text>
-    </View>
-<View style={styles.filterBox}>
-
-  {/* EMAIL */}
-  <TextInput
-    placeholder="Search email"
-    value={email}
-    onChangeText={setEmail}
-    style={styles.input}
-  />
-
-  {/* TYPE */}
-  <View style={styles.row}>
-    <TouchableOpacity
-  onPress={() => setType("TRANSFER")}
-  style={[
-    styles.input,
-    type === "TRANSFER" && { backgroundColor: "#4CAF50" }
-  ]}
->
-  <Text style={{ color: type === "TRANSFER" ? "white" : "black" }}>
-    TRANSFER
-  </Text>
-</TouchableOpacity>
-
-    <TouchableOpacity
-  onPress={() => setType("DEPOSIT")}
-  style={[
-    styles.input,
-    type === "DEPOSIT" && { backgroundColor: "#4CAF50" }
-  ]}
->
-  <Text style={{ color: type === "DEPOSIT" ? "white" : "black" }}>
-    DEPOSIT
-  </Text>
-</TouchableOpacity>
-
-    <TouchableOpacity
-  onPress={() => setType("")}
-  style={[
-    styles.input,
-    type === "" && { backgroundColor: "#4CAF50" }
-  ]}
->
-  <Text style={{ color: type === "" ? "white" : "black" }}>
-    ALL
-  </Text>
-</TouchableOpacity>
-  </View>
-
-  {/* STATUS */}
-  <View style={styles.row}>
-    <TouchableOpacity
-    onPress={() => setStatus("SUCCESS")}
-    style={[
-      styles.input,
-      status === "SUCCESS" && { backgroundColor: "#4CAF50" }
-    ]}
-  >
-    <Text style={{ color: status === "SUCCESS" ? "white" : "black" }}>
-      SUCCESS
-    </Text>
-  </TouchableOpacity>
-
-    <TouchableOpacity
-    onPress={() => setStatus("FAILED")}
-    style={[
-      styles.input,
-      status === "FAILED" && { backgroundColor: "#4CAF50" }
-    ]}
-  >
-    <Text style={{ color: status === "FAILED" ? "white" : "black" }}>
-      FAILED
-    </Text>
-  </TouchableOpacity>
-
-    <TouchableOpacity
-    onPress={() => setStatus("")}
-    style={[
-      styles.input,
-      status === "" && { backgroundColor: "#4CAF50" }
-    ]}
-  >
-    <Text style={{ color: status === "" ? "white" : "black" }}>
-      ALL
-    </Text>
-  </TouchableOpacity>
-  </View>
-
-<TouchableOpacity onPress={() => setShowFromPicker(true)}>
-  <Text style={styles.input}>
-    {from ? new Date(from).toLocaleDateString() : "Select From Date"}
-  </Text>
-</TouchableOpacity>
-
-{showFromPicker && (
-  <DateTimePicker
-    value={new Date()}
-    mode="date"
-    onChange={(e, date) => {
-      setShowFromPicker(false);
-      if (date) setFrom(date.toISOString());
-    }}
-  />
-)}
-
-<TouchableOpacity onPress={() => setShowToPicker(true)}>
-  <Text style={styles.input}>
-    {to ? new Date(to).toLocaleDateString() : "Select To Date"}
-  </Text>
-</TouchableOpacity>
-
-{showToPicker && (
-  <DateTimePicker
-    value={new Date()}
-    mode="date"
-    onChange={(e, date) => {
-      setShowToPicker(false);
-      if (date) setTo(date.toISOString());
-    }}
-  />
-)}
-
-  {/* APPLY */}
-  <TouchableOpacity style={styles.button} onPress={applyFilter}>
-    <Text>Apply Filter</Text>
-  </TouchableOpacity>
-
-</View>
-    {/* LIST */}
-    <FlatList
-      contentContainerStyle={{ padding: SIZES.padding }}
-      data={transactions}
-      keyExtractor={(item, index) =>
-        item.id ? item.id.toString() + "_" + index : index.toString()
-      }
-      onEndReached={() => setPage(prev => prev + 1)}
-      renderItem={({ item }) => (
-        <View style={styles.card}>
-
-          {/* TOP ROW */}
-          <View style={styles.rowBetween}>
-            <Text style={styles.type}>{item.type}</Text>
-            <Text style={styles.amount}>
-              {formatMoney(item.amount)}
-            </Text>
-          </View>
-
-          {/* USERS */}
-          {item.sender && item.receiver && (
-            <Text style={styles.info}>
-              {item.sender.email} → {item.receiver.email}
-            </Text>
-          )}
-
-          {item.receiver && !item.sender && (
-            <Text style={styles.info}>
-              Deposit → {item.receiver.email}
-            </Text>
-          )}
-
-          {/* STATUS */}
-          <View style={styles.rowBetween}>
-            <Text style={styles.status}>
-              {item.status}
-            </Text>
-
-            {item.suspicious && (
-              <Text style={styles.suspicious}>
-                ⚠️ Suspicious
-              </Text>
-            )}
-          </View>
-
-          {/* DATE */}
-          <Text style={styles.date}>
-            {formatDate(item.createdAt)}
-          </Text>
-
-        </View>
-      )}
-    />
-
-  </View>
-);
-}
 const formatMoney = (num) =>
   new Intl.NumberFormat("vi-VN").format(num) + " VND";
 
 const formatDate = (date) =>
   new Date(date).toLocaleString("vi-VN");
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
 
-  header: {
-    alignItems: "center",
-    paddingVertical: 20,
-  },
+// ─── Status Badge ────────────────────────────────────────────────────────────
 
-  logo: {
-    width: 60,
-    height: 60,
-    marginBottom: 8,
-  },
+const StatusBadge = ({ status }) => {
+  const isSuccess = status === "SUCCESS";
+  return (
+    <View style={[badge.wrap, isSuccess ? badge.success : badge.failed]}>
+      <Text style={[badge.text, isSuccess ? badge.successText : badge.failedText]}>
+        {status}
+      </Text>
+    </View>
+  );
+};
 
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: COLORS.primary,
+const badge = StyleSheet.create({
+  wrap: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
+  success: { backgroundColor: "#F0FDF4" },
+  failed: { backgroundColor: "#FFF1F2" },
+  text: { fontSize: 11, fontWeight: "700" },
+  successText: { color: "#16A34A" },
+  failedText: { color: "#E11D48" },
+});
 
-  subtitle: {
-    color: COLORS.secondary,
-    marginTop: 4,
+// ─── Type Chip ───────────────────────────────────────────────────────────────
+
+const TypeChip = ({ label, active, onPress }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    style={[chip.base, active && chip.active]}
+    activeOpacity={0.7}
+  >
+    <Text style={[chip.text, active && chip.activeText]}>{label}</Text>
+  </TouchableOpacity>
+);
+
+const chip = StyleSheet.create({
+  base: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "#F1F5F9",
+    marginRight: 8,
   },
+  active: { backgroundColor: "#0F172A" },
+  text: { fontSize: 13, fontWeight: "600", color: "#64748B" },
+  activeText: { color: "#FFFFFF" },
+});
 
-  card: {
-    backgroundColor: COLORS.white,
-    padding: 16,
-    borderRadius: SIZES.radius,
+// ─── Transaction Card ─────────────────────────────────────────────────────────
+
+const TransactionCard = ({ item }) => {
+  const isDeposit = !item.sender && item.receiver;
+  const dotColor = isDeposit ? "#60A5FA" : "#4ADE80";
+
+  return (
+    <View style={card.wrap}>
+      {/* Top Row */}
+      <View style={card.row}>
+        <View style={card.typeRow}>
+          <View style={[card.dot, { backgroundColor: dotColor }]} />
+          <Text style={card.type}>{item.type}</Text>
+        </View>
+        <Text style={card.amount}>{formatMoney(item.amount)}</Text>
+      </View>
+
+      {/* Route */}
+      <Text style={card.route}>
+        {isDeposit
+          ? `Deposit → ${item.receiver?.email}`
+          : `${item.sender?.email} → ${item.receiver?.email}`}
+      </Text>
+
+      {/* Bottom Row */}
+      <View style={card.row}>
+        <View style={card.bottomLeft}>
+          <StatusBadge status={item.status} />
+          {item.suspicious && (
+            <View style={card.suspiciousTag}>
+              <Text style={card.suspiciousText}>⚠ Suspicious</Text>
+            </View>
+          )}
+        </View>
+        <Text style={card.date}>{formatDate(item.createdAt)}</Text>
+      </View>
+    </View>
+  );
+};
+
+const card = StyleSheet.create({
+  wrap: {
+    backgroundColor: "#FFFFFF",
+    padding: 18,
+    borderRadius: 24,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    ...SHADOW,
+    borderColor: "#F1F5F9",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
-
-  rowBetween: {
+  row: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
   },
-
+  typeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
   type: {
-    fontWeight: "600",
-    color: COLORS.primary,
+    fontWeight: "700",
+    fontSize: 14,
+    color: "#1E293B",
   },
-
   amount: {
     fontWeight: "700",
-    color: COLORS.primary,
+    fontSize: 15,
+    color: "#1E293B",
   },
-
-  info: {
+  route: {
     marginTop: 6,
-    color: COLORS.secondary,
+    fontSize: 13,
+    color: "#94A3B8",
+    lineHeight: 18,
   },
-
-  status: {
-    marginTop: 8,
-    color: COLORS.secondary,
+  bottomLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
-
-  suspicious: {
-    color: "red",
-    fontWeight: "600",
+  suspiciousTag: {
+    backgroundColor: "#FFF7ED",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginLeft: 8,
   },
-
+  suspiciousText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#EA580C",
+  },
   date: {
-    marginTop: 6,
-    fontSize: 12,
-    color: COLORS.secondary,
+    fontSize: 11,
+    color: "#CBD5E1",
   },
-  input: {
-  borderWidth: 1,
-  borderColor: "#ccc",
-  padding: 10,
-  borderRadius: 8,
-  marginVertical: 6,
-  backgroundColor: "white",
-},
+});
 
-row: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  marginVertical: 6,
-},
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 
-filterBox: {
-  backgroundColor: "white",
-  margin: 10,
-  padding: 10,
-  borderRadius: 10,
-  borderWidth: 1,
-  borderColor: "#ddd",
-},
+export default function TransactionListScreen() {
+  const [transactions, setTransactions] = useState([]);
+  const [page, setPage] = useState(0);
+  const [email, setEmail] = useState("");
+  const [type, setType] = useState("");
+  const [status, setStatus] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [showFromPicker, setShowFromPicker] = useState(false);
+  const [showToPicker, setShowToPicker] = useState(false);
+  const [reload, setReload] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
 
-button: {
-  backgroundColor: "#4CAF50",
-  padding: 12,
-  borderRadius: 8,
-  alignItems: "center",
-  marginTop: 10,
-},
+  const fetchData = async () => {
+    try {
+      const params = { page, size: 10 };
+      if (type) params.type = type;
+      if (status) params.status = status;
+      if (from) params.from = from.slice(0, 19);
+      if (to) params.to = to.slice(0, 19);
+      if (email) params.email = email;
+
+      const res = await getAllTransactions(params);
+      const newData = res.data.content;
+
+      if (page === 0) {
+        setTransactions(newData);
+      } else {
+        setTransactions((prev) => [...prev, ...newData]);
+      }
+    } catch (e) {
+      console.log("FETCH ERROR:", e);
+    }
+  };
+
+  const applyFilter = () => {
+    setTransactions([]);
+    setPage(0);
+    setReload((prev) => !prev);
+    setFilterOpen(false);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [page, reload]);
+
+  // Count active filters for badge
+  const activeFilters = [type, status, from, to, email].filter(Boolean).length;
+
+  return (
+    <View style={styles.container}>
+
+      {/* ── HEADER ── */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Image source={logo} style={styles.logo} />
+          <View>
+            <Text style={styles.greeting}>Control Panel</Text>
+            <Text style={styles.title}>Transactions</Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          style={[styles.filterToggle, activeFilters > 0 && styles.filterToggleActive]}
+          onPress={() => setFilterOpen((p) => !p)}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.filterToggleText, activeFilters > 0 && styles.filterToggleTextActive]}>
+            {activeFilters > 0 ? `Filter (${activeFilters})` : "Filter"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ── FILTER PANEL ── */}
+      {filterOpen && (
+        <View style={styles.filterPanel}>
+
+          {/* Email */}
+          <TextInput
+            placeholder="Search by email"
+            placeholderTextColor="#94A3B8"
+            value={email}
+            onChangeText={setEmail}
+            style={styles.searchInput}
+          />
+
+          {/* Type */}
+          <Text style={styles.filterLabel}>Type</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+            <TypeChip label="All" active={type === ""} onPress={() => setType("")} />
+            <TypeChip label="Transfer" active={type === "TRANSFER"} onPress={() => setType("TRANSFER")} />
+            <TypeChip label="Deposit" active={type === "DEPOSIT"} onPress={() => setType("DEPOSIT")} />
+          </ScrollView>
+
+          {/* Status */}
+          <Text style={styles.filterLabel}>Status</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+            <TypeChip label="All" active={status === ""} onPress={() => setStatus("")} />
+            <TypeChip label="Success" active={status === "SUCCESS"} onPress={() => setStatus("SUCCESS")} />
+            <TypeChip label="Failed" active={status === "FAILED"} onPress={() => setStatus("FAILED")} />
+          </ScrollView>
+
+          {/* Date Range */}
+          <Text style={styles.filterLabel}>Date Range</Text>
+          <View style={styles.dateRow}>
+            <TouchableOpacity
+              style={styles.dateBtn}
+              onPress={() => setShowFromPicker(true)}
+            >
+              <Text style={styles.dateBtnText}>
+                {from ? new Date(from).toLocaleDateString("en-GB") : "From date"}
+              </Text>
+            </TouchableOpacity>
+            <Text style={styles.dateSep}>→</Text>
+            <TouchableOpacity
+              style={styles.dateBtn}
+              onPress={() => setShowToPicker(true)}
+            >
+              <Text style={styles.dateBtnText}>
+                {to ? new Date(to).toLocaleDateString("en-GB") : "To date"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {showFromPicker && (
+            <DateTimePicker
+              value={new Date()}
+              mode="date"
+              onChange={(e, date) => {
+                setShowFromPicker(false);
+                if (date) setFrom(date.toISOString());
+              }}
+            />
+          )}
+          {showToPicker && (
+            <DateTimePicker
+              value={new Date()}
+              mode="date"
+              onChange={(e, date) => {
+                setShowToPicker(false);
+                if (date) setTo(date.toISOString());
+              }}
+            />
+          )}
+
+          {/* Apply */}
+          <TouchableOpacity style={styles.applyBtn} onPress={applyFilter} activeOpacity={0.8}>
+            <Text style={styles.applyBtnText}>Apply Filter</Text>
+          </TouchableOpacity>
+
+          {/* Reset */}
+          {activeFilters > 0 && (
+            <TouchableOpacity
+              style={styles.resetBtn}
+              onPress={() => {
+                setEmail(""); setType(""); setStatus(""); setFrom(""); setTo("");
+                setTransactions([]); setPage(0); setReload((p) => !p); setFilterOpen(false);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.resetBtnText}>Reset All</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* ── LIST ── */}
+      <FlatList
+        data={transactions}
+        keyExtractor={(item, index) =>
+          item.id ? `${item.id}_${index}` : `${index}`
+        }
+        contentContainerStyle={styles.listContent}
+        onEndReached={() => setPage((prev) => prev + 1)}
+        onEndReachedThreshold={0.4}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => <TransactionCard item={item} />}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No transactions found</Text>
+            <Text style={styles.emptySubText}>Try adjusting your filters</Text>
+          </View>
+        }
+      />
+    </View>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 24,
+  },
+
+  // Header
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 56,
+    marginBottom: 12,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  logo: {
+    width: 40,
+    height: 40,
+    marginRight: 12,
+  },
+  greeting: {
+    fontSize: 13,
+    color: "#94A3B8",
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#1E293B",
+  },
+  filterToggle: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: "#F1F5F9",
+  },
+  filterToggleActive: {
+    backgroundColor: "#0F172A",
+  },
+  filterToggleText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#64748B",
+  },
+  filterToggleTextActive: {
+    color: "#FFFFFF",
+  },
+
+  // Filter panel
+  filterPanel: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+  },
+  filterLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#94A3B8",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 8,
+    marginTop: 14,
+  },
+  searchInput: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: "#1E293B",
+  },
+  chipRow: {
+    flexDirection: "row",
+    marginBottom: 4,
+  },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  dateBtn: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  dateBtnText: {
+    fontSize: 13,
+    color: "#64748B",
+    fontWeight: "500",
+  },
+  dateSep: {
+    fontSize: 16,
+    color: "#CBD5E1",
+  },
+  applyBtn: {
+    backgroundColor: "#0F172A",
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: "center",
+    marginTop: 16,
+  },
+  applyBtnText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+  resetBtn: {
+    paddingVertical: 12,
+    borderRadius: 16,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  resetBtnText: {
+    color: "#94A3B8",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+
+  // List
+  listContent: {
+    paddingBottom: 40,
+  },
+
+  // Empty state
+  emptyState: {
+    alignItems: "center",
+    paddingTop: 60,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1E293B",
+  },
+  emptySubText: {
+    fontSize: 13,
+    color: "#94A3B8",
+    marginTop: 6,
+  },
 });

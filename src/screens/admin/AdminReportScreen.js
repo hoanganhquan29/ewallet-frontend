@@ -1,8 +1,4 @@
 import React, { useEffect, useState } from "react";
-import * as FileSystem from "expo-file-system/legacy";
-import * as Sharing from "expo-sharing";
-import { TouchableOpacity } from "react-native";
-
 import {
   View,
   Text,
@@ -10,7 +6,12 @@ import {
   ScrollView,
   ActivityIndicator,
   Dimensions,
+  TouchableOpacity,
+  Image,
 } from "react-native";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
+import { LineChart } from "react-native-chart-kit";
 import {
   getReportOverview,
   getReportSummary,
@@ -18,7 +19,9 @@ import {
   getUserReport,
   getAuditSummary,
 } from "../../api/adminApi";
-import { LineChart } from "react-native-chart-kit";
+import logo from "../../assets/logo.png";
+
+// --- Helpers ---
 const formatMoney = (num) => {
   if (!num) return "0 VND";
   return new Intl.NumberFormat("vi-VN").format(num) + " VND";
@@ -28,254 +31,300 @@ const formatNumber = (num) => {
   if (!num) return "0";
   return new Intl.NumberFormat("vi-VN").format(num);
 };
+
+// --- Custom Components ---
+const StatCard = ({ label, value, type, fullWidth }) => (
+  <View style={[cardStyles.wrap, fullWidth && { width: "100%" }]}>
+    <Text style={cardStyles.label}>{label}</Text>
+    <Text style={cardStyles.value}>
+      {type === "money" ? formatMoney(value) : formatNumber(value)}
+    </Text>
+  </View>
+);
+
+const cardStyles = StyleSheet.create({
+  wrap: {
+    backgroundColor: "#FFFFFF",
+    padding: 20,
+    borderRadius: 24,
+    marginBottom: 12,
+    width: "48%",
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#94A3B8",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  value: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#1E293B",
+  },
+});
+
 export default function AdminReportScreen() {
   const [loading, setLoading] = useState(true);
-
   const [overview, setOverview] = useState({});
   const [summary, setSummary] = useState({});
   const [revenue, setRevenue] = useState([]);
   const [users, setUsers] = useState({});
   const [audit, setAudit] = useState({});
 
-  
   useEffect(() => {
     fetchAll();
   }, []);
 
   const fetchAll = async () => {
     try {
-      const [
-        overviewRes,
-        summaryRes,
-        revenueRes,
-        usersRes,
-        auditRes,
-      ] = await Promise.all([
+      const [ovRes, sumRes, revRes, userRes, audRes] = await Promise.all([
         getReportOverview(),
         getReportSummary(),
         getRevenueDaily(),
         getUserReport(),
         getAuditSummary(),
       ]);
-
-      setOverview(overviewRes.data || {});
-      setSummary(summaryRes.data || {});
-      setRevenue(revenueRes.data || []);
-      setUsers(usersRes.data || {});
-      setAudit(auditRes.data || {});
+      setOverview(ovRes.data || {});
+      setSummary(sumRes.data || {});
+      setRevenue(revRes.data || []);
+      setUsers(userRes.data || {});
+      setAudit(audRes.data || {});
     } catch (err) {
       console.log("FETCH ERROR:", err);
     } finally {
       setLoading(false);
     }
   };
-const handleExport = async () => {
-  try {
-    let csv = "Date,Amount\n";
 
-    revenue.forEach((r) => {
-      csv += `${r.date},${r.amount}\n`;
-    });
+  const handleExport = async () => {
+    try {
+      let csv = "Date,Amount\n";
+      revenue.forEach((r) => { csv += `${r.date},${r.amount}\n`; });
+      const fileUri = FileSystem.documentDirectory + "report.csv";
+      await FileSystem.writeAsStringAsync(fileUri, csv, { encoding: "utf8" });
+      await Sharing.shareAsync(fileUri);
+    } catch (error) {
+      console.log("EXPORT ERROR:", error);
+    }
+  };
 
-    const fileUri = FileSystem.documentDirectory + "report.csv";
-
-    console.log("FILE URI:", fileUri); // debug
-
-    await FileSystem.writeAsStringAsync(fileUri, csv, {
-      encoding: "utf8",
-    });
-
-    await Sharing.shareAsync(fileUri);
-
-  } catch (error) {
-    console.log("EXPORT ERROR:", error);
-  }
-};
   if (loading) {
-    return <ActivityIndicator style={{ marginTop: 50 }} size="large" />;
+    return (
+      <View style={styles.loadingCenter}>
+        <ActivityIndicator color="#0F172A" size="large" />
+      </View>
+    );
   }
 
-  // ✅ SAFE DATA
-  const safeRevenue = Array.isArray(revenue)
-    ? revenue.filter((r) => r && !isNaN(r.amount))
-    : [];
-
- const chartData = {
-  labels: safeRevenue.map((r) => {
-    const d = new Date(r.date);
-    return `${d.getDate()}/${d.getMonth() + 1}`;
-  }),
-  datasets: [
-    {
-      data: safeRevenue.map((r) => Number(r.amount) || 0),
-    },
-  ],
-};
-
-  console.log("REVENUE:", revenue);
+  const safeRevenue = Array.isArray(revenue) ? revenue.filter((r) => r && !isNaN(r.amount)) : [];
+  const chartData = {
+    labels: safeRevenue.map((r) => {
+      const d = new Date(r.date);
+      return `${d.getDate()}/${d.getMonth() + 1}`;
+    }),
+    datasets: [{ data: safeRevenue.map((r) => Number(r.amount) || 0) }],
+  };
 
   return (
-    
-    <ScrollView style={styles.container}>
-        <TouchableOpacity style={styles.exportBtn} onPress={handleExport}>
-  <Text style={{ color: "white" }}>Export Report</Text>
-</TouchableOpacity>
-      {/* SECTION 1 */}
-      <Text style={styles.title}>Overview</Text>
-      <View style={styles.row}>
-        <Card label="Users" value={overview.totalUsers} />
-        <Card label="Transactions" value={overview.totalTransactions} />
-      </View>
-      <Card label="Total Amount" value={overview.totalAmount} full type="money" />
-
-      {/* SECTION 2 */}
-      <Text style={styles.title}>Transaction Summary</Text>
-      <Card label="Total Amount" value={summary.totalAmount} type="money" />
-      <Card label="Deposit" value={summary.depositAmount} type="money" />
-      <Card label="Transfer" value={summary.transferAmount} type="money" />
-
-      {/* SECTION 3 */}
-      <Text style={styles.title}>Transaction Volume</Text>
-
-      {safeRevenue.length > 0 ? (
-     <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: 15, paddingBottom: 10 }} // Thêm padding bottom để tránh dính lề
-    >
-      <LineChart
-        data={chartData}
-        // Tăng độ rộng mỗi cột lên một chút (80 thay vì 70) 
-        // và cộng thêm một khoảng đệm cố định cho cột số liệu trục Y
-        width={Math.max(
-          Dimensions.get("window").width - 30,
-          safeRevenue.length * 80 + 60 
-        )}
-        height={250} // Tăng nhẹ height để nhãn trục X không bị sát đáy
-        chartConfig={{
-          backgroundGradientFrom: "#fff",
-          backgroundGradientTo: "#fff",
-          decimalPlaces: 0,
-          color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-          labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-          // Thêm cấu hình style cho Label để không bị cắt
-          propsForLabels: {
-            fontSize: 10,
-          },
-          // Căn chỉnh lề để tránh mất số liệu bên trái
-          paddingLeft: 15, 
-          paddingRight: 50, // Tránh mất điểm dữ liệu cuối cùng bên phải
-        }}
-        // Giúp biểu đồ hiển thị mượt hơn và không bị tràn khung
-        fromZero={true} 
-        yAxisLabel=""
-        yAxisSuffix=""
-        verticalLabelRotation={30} // Xoay nhẹ nhãn ngày tháng nếu dữ liệu quá dày
-        style={{
-          marginVertical: 8,
-          borderRadius: 16,
-        }}
-      />
-    </ScrollView>
-  ) : (
-    <Text style={{ textAlign: 'center', margin: 20 }}>No revenue data</Text>
-  )}
-
-      {/* SECTION 4 */}
-      <Text style={styles.title}>User Report</Text>
-      <Card label="New Users" value={users.newUsers} />
-      <Card label="Inactive Users" value={users.inactiveUsers} />
-
-      <Text style={styles.subtitle}>Top Users</Text>
-      {users.topUsers?.map((u, index) => (
-        <View key={index} style={styles.listItem}>
-          <Text style={styles.email}>{u[0]}</Text>
-          <Text style={styles.amount}>{formatMoney(u[1])}</Text>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* --- HEADER --- */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Image source={logo} style={styles.logo} />
+          <View>
+            <Text style={styles.greeting}>Admin Dashboard</Text>
+            <Text style={styles.title}>System Reports</Text>
+          </View>
         </View>
-      ))}
+        <TouchableOpacity style={styles.exportBtn} onPress={handleExport}>
+          <Text style={styles.exportBtnText}>Export CSV</Text>
+        </TouchableOpacity>
+      </View>
 
-      {/* SECTION 5 */}
-      <Text style={styles.title}>Audit Summary</Text>
-      <Card label="Login Fail" value={audit.loginFail} />
-      <Card label="Lock User" value={audit.lockUser} />
-    <Card label="Admin Actions" value={audit.adminActions} />
+      {/* --- OVERVIEW --- */}
+      <Text style={styles.sectionTitle}>Overview</Text>
+      <View style={styles.row}>
+        <StatCard label="Total Users" value={overview.totalUsers} />
+        <StatCard label="Transactions" value={overview.totalTransactions} />
+      </View>
+      <StatCard label="Total Volume" value={overview.totalAmount} fullWidth type="money" />
+
+      {/* --- CHART SECTION --- */}
+      <Text style={styles.sectionTitle}>Revenue Trends</Text>
+      <View style={styles.chartCard}>
+        {safeRevenue.length > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <LineChart
+              data={chartData}
+              width={Math.max(Dimensions.get("window").width - 64, safeRevenue.length * 70)}
+              height={220}
+              chartConfig={{
+                backgroundColor: "#ffffff",
+                backgroundGradientFrom: "#ffffff",
+                backgroundGradientTo: "#ffffff",
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(15, 23, 42, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(148, 163, 184, ${opacity})`,
+                propsForDots: { r: "4", strokeWidth: "2", stroke: "#0F172A" },
+                style: { borderRadius: 16 },
+              }}
+              bezier
+              style={styles.chart}
+            />
+          </ScrollView>
+        ) : (
+          <Text style={styles.emptyText}>No data available</Text>
+        )}
+      </View>
+
+      {/* --- TRANSACTION SUMMARY --- */}
+      <Text style={styles.sectionTitle}>Transaction Breakdown</Text>
+      <View style={styles.row}>
+        <StatCard label="Deposits" value={summary.depositAmount} type="money" />
+        <StatCard label="Transfers" value={summary.transferAmount} type="money" />
+      </View>
+
+      {/* --- USER ACTIVITY --- */}
+      <Text style={styles.sectionTitle}>User Activity</Text>
+      <View style={styles.row}>
+        <StatCard label="New Users" value={users.newUsers} />
+        <StatCard label="Inactive" value={users.inactiveUsers} />
+      </View>
+
+      <View style={styles.topUsersCard}>
+        <Text style={styles.innerTitle}>Top Performers</Text>
+        {users.topUsers?.map((u, index) => (
+          <View key={index} style={styles.userItem}>
+            <Text style={styles.userEmail}>{u[0]}</Text>
+            <Text style={styles.userAmount}>{formatMoney(u[1])}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* --- AUDIT LOGS --- */}
+      <Text style={styles.sectionTitle}>Security & Audit</Text>
+      <View style={styles.row}>
+        <StatCard label="Login Failures" value={audit.loginFail} />
+        <StatCard label="Locked Users" value={audit.lockUser} />
+      </View>
+      <StatCard label="Admin Actions" value={audit.adminActions} fullWidth />
+      
+      <View style={{ height: 40 }} />
     </ScrollView>
   );
 }
 
-const Card = ({ label, value, full, type }) => {
-  const displayValue =
-    type === "money"
-      ? formatMoney(value)
-      : formatNumber(value);
-
-  return (
-    <View style={[styles.card, full && { width: "100%" }]}>
-      <Text style={styles.cardValue}>{displayValue}</Text>
-      <Text style={styles.cardLabel}>{label}</Text>
-    </View>
-  );
-  
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 15,
-    backgroundColor: "#f5f6fa",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 24,
+  },
+  loadingCenter: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 56,
+    marginBottom: 24,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  logo: {
+    width: 40,
+    height: 40,
+    marginRight: 12,
+  },
+  greeting: {
+    fontSize: 13,
+    color: "#94A3B8",
   },
   title: {
     fontSize: 20,
-    fontWeight: "bold",
-    marginVertical: 10,
+    fontWeight: "800",
+    color: "#1E293B",
   },
-  subtitle: {
-    fontSize: 16,
-    marginTop: 10,
-    marginBottom: 5,
+  exportBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: "#0F172A",
+  },
+  exportBtnText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1E293B",
+    marginTop: 20,
+    marginBottom: 12,
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  card: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 10,
-    width: "48%",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+  chartCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+    marginBottom: 12,
   },
-  cardValue: {
-    fontSize: 20,
-    fontWeight: "bold",
+  chart: {
+    marginVertical: 8,
+    borderRadius: 16,
   },
-  cardLabel: {
-    color: "#888",
-    marginTop: 5,
+  topUsersCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 24,
+    padding: 20,
+    marginTop: 8,
   },
-  listItem: {
+  innerTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#94A3B8",
+    textTransform: "uppercase",
+    marginBottom: 12,
+  },
+  userItem: {
     flexDirection: "row",
     justifyContent: "space-between",
-    padding: 10,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    marginBottom: 5,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
   },
-  email: {
-    fontSize: 14,
+  userEmail: {
+    fontSize: 13,
+    color: "#475569",
   },
-  amount: {
-    fontWeight: "bold",
+  userAmount: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1E293B",
   },
-  exportBtn: {
-  backgroundColor: "#2ecc71",
-  padding: 12,
-  borderRadius: 10,
-  alignItems: "center",
-  marginBottom: 15,
-},
+  emptyText: {
+    textAlign: "center",
+    color: "#94A3B8",
+    padding: 20,
+  },
 });
