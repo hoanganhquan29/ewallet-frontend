@@ -1,8 +1,17 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
-import { logout } from '../../utils/auth'
-import { Image } from "react-native";
-import { COLORS, SIZES, SHADOW } from "../../theme/theme";
+import React from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ScrollView,
+  Image,
+} from 'react-native';
+import { logout } from '../../utils/auth';
+import { COLORS, SIZES } from "../../theme/theme";
 import logo from "../../assets/logo.png";
+
 export default function AdminHomeScreen({ navigation }) {
 
   const handleLogout = () => {
@@ -13,157 +22,212 @@ export default function AdminHomeScreen({ navigation }) {
         { text: 'Cancel', style: 'cancel' },
         { text: 'Logout', onPress: () => logout(navigation) }
       ]
-    )
-  }
+    );
+  };
 
   return (
-  <View style={styles.container}>
-
-    {/* TOP BAR */}
-    <View style={styles.topBar}>
-      <View style={styles.left}>
-        <Image source={logo} style={styles.logo} />
-        <Text style={styles.appName}>Admin</Text>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      
+      {/* HEADER SECTION */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Image source={logo} style={styles.logo} />
+          <View>
+            <Text style={styles.greeting}>Control Panel</Text>
+            <Text style={styles.appName}>Administrator</Text>
+          </View>
+        </View>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
       </View>
 
-      <TouchableOpacity onPress={handleLogout}>
-        <Text style={styles.logout}>Logout</Text>
-      </TouchableOpacity>
-    </View>
+      {/* SYSTEM OVERVIEW CARD */}
+      <View style={styles.dashboardCard}>
+        <Text style={styles.cardLabel}>System Status</Text>
+        <Text style={styles.dashboardTitle}>Active & Secure</Text>
+        <Text style={styles.dashboardSub}>
+          Monitor transactions and manage user access levels.
+        </Text>
+      </View>
 
-    {/* DASHBOARD CARD */}
-    <View style={styles.dashboardCard}>
-      <Text style={styles.dashboardTitle}>System Overview</Text>
-      <Text style={styles.dashboardSub}>
-        Manage users & monitor transactions
-      </Text>
-    </View>
+      {/* MAIN MANAGEMENT GRID */}
+      <Text style={styles.sectionTitle}>Management</Text>
+      <View style={styles.grid}>
+        
+        <TouchableOpacity
+          style={styles.gridItem}
+          onPress={() => navigation.navigate("Users")}
+        >
+          <View style={[styles.dot, { backgroundColor: '#60A5FA' }]} />
+          <Text style={styles.gridText}>Users</Text>
+        </TouchableOpacity>
 
-    {/* GRID MENU */}
-    <View style={styles.grid}>
+        <TouchableOpacity
+          style={styles.gridItem}
+          onPress={() => navigation.navigate("AdminTransactions")}
+        >
+          <View style={[styles.dot, { backgroundColor: '#4ADE80' }]} />
+          <Text style={styles.gridText}>Transactions</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.gridItem}
-        onPress={() => navigation.navigate("Users")}
-      >
-        <Text style={styles.icon}>👤</Text>
-        <Text style={styles.gridText}>Users</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.gridItem}
+          onPress={() => navigation.navigate("Suspicious")}
+        >
+          <View style={[styles.dot, { backgroundColor: '#F87171' }]} />
+          <Text style={styles.gridText}>Suspicious</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.gridItem}
-        onPress={() => navigation.navigate("AdminTransactions")}
-      >
-        <Text style={styles.icon}>💸</Text>
-        <Text style={styles.gridText}>Transactions</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.gridItem}
+          onPress={() => navigation.navigate("AuditLogs")}
+        >
+          <View style={[styles.dot, { backgroundColor: '#FBBF24' }]} />
+          <Text style={styles.gridText}>Audit Logs</Text>
+        </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity
-        style={styles.gridItem}
-        onPress={() => navigation.navigate("Suspicious")}
-      >
-        <Text style={styles.icon}>⚠️</Text>
-        <Text style={styles.gridText}>Suspicious</Text>
-      </TouchableOpacity>
+      {/* SECONDARY ACTIONS */}
+      <View style={styles.reportSection}>
+        <TouchableOpacity 
+          style={styles.reportBtn} 
+          onPress={() => navigation.navigate("AdminReport")}
+        >
+          <Text style={styles.reportBtnText}>Generate System Report</Text>
+          <Text style={styles.arrow}>→</Text>
+        </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity
-        style={styles.gridItem}
-        onPress={() => navigation.navigate("AuditLogs")}
-      >
-        <Text style={styles.icon}>📜</Text>
-        <Text style={styles.gridText}>Audit Logs</Text>
-      </TouchableOpacity>
-<TouchableOpacity
-  style={styles.gridItem}
-  onPress={() => navigation.navigate("AdminReport")}
->
-  <Text style={styles.icon}>📊</Text>
-  <Text style={styles.gridText}>Reports</Text>
-</TouchableOpacity>
-    </View>
-
-  </View>
-);
-  
+      <View style={{ height: 40 }} />
+    </ScrollView>
+  );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    padding: SIZES.padding,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
   },
-
-  topBar: {
+  header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginTop: 60,
+    marginBottom: 30,
   },
-
-  left: {
-    flexDirection: "row",
-    alignItems: "center",
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-
   logo: {
-    width: 30,
-    height: 30,
-    marginRight: 8,
+    width: 40,
+    height: 40,
+    marginRight: 12,
   },
-
+  greeting: {
+    fontSize: 14,
+    color: '#94A3B8',
+  },
   appName: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.primary,
+    fontSize: 20,
+    fontWeight: "800",
+    color: '#1E293B',
   },
-
-  logout: {
-    color: "red",
-    fontWeight: "500",
+  logoutBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: '#FFF1F2',
   },
-
-  dashboardCard: {
-    backgroundColor: COLORS.primary,
-    padding: 20,
-    borderRadius: SIZES.radius,
-    marginBottom: 20,
-  },
-
-  dashboardTitle: {
-    color: "white",
-    fontSize: 18,
+  logoutText: {
+    color: '#E11D48',
+    fontSize: 12,
     fontWeight: "700",
   },
-
-  dashboardSub: {
-    color: "#ccc",
-    marginTop: 5,
+  dashboardCard: {
+    backgroundColor: '#0F172A', // Navy Dark đồng bộ HomeScreen
+    padding: 28,
+    borderRadius: 32,
+    marginBottom: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
   },
-
+  cardLabel: {
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  dashboardTitle: {
+    color: "white",
+    fontSize: 24,
+    fontWeight: "700",
+  },
+  dashboardSub: {
+    color: "#94A3B8",
+    marginTop: 8,
+    lineHeight: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 15,
+  },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
   },
-
   gridItem: {
     width: "48%",
-    backgroundColor: COLORS.white,
-    padding: 20,
-    borderRadius: SIZES.radius,
-    alignItems: "center",
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: '#F1F5F9',
   },
-
-  icon: {
-    fontSize: 24,
-    marginBottom: 8,
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 10,
   },
-
   gridText: {
-    color: COLORS.primary,
-    fontWeight: "500",
+    color: '#334155',
+    fontWeight: "600",
+    fontSize: 15,
+  },
+  reportSection: {
+    marginTop: 10,
+  },
+  reportBtn: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  reportBtnText: {
+    fontSize: 16,
+    color: '#1E293B',
+    fontWeight: '600',
+  },
+  arrow: {
+    fontSize: 18,
+    color: '#64748B',
   },
 });
